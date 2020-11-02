@@ -1,0 +1,19 @@
+{
+    "content": [
+        {
+            "path": "SimObjects/AirPlanes/Asobo_A320_NEO/flight_model.cfg",
+            "size": 27531,
+            "date": 132455610471829316
+        },
+        {
+            "path": "SimObjects/AirPlanes/Asobo_A320_NEO/panel/panel.cfg",
+            "size": 2494,
+            "date": 132455610471829316
+        },
+        {
+            "path": "SimObjects/AirPlanes/Asobo_A320_NEO/panel/airbus-fly-by-wire.wasm",
+            "size": 31199,
+            "date": 132455610471829316
+        }
+    ]
+}
