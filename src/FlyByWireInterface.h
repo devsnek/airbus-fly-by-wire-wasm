@@ -4,9 +4,9 @@
 #include <SimConnect.h>
 
 #include "SimConnectInterface.h"
-#include "fbw.h"
+#include "FlyByWire.h"
 
-class FlyByWire
+class FlyByWireInterface
 {
 public:
   bool connect();
@@ -17,11 +17,8 @@ public:
       double sampleTime);
 
 private:
-  bool isConnected = false;
-  HANDLE hSimConnect = 0;
-
   SimConnectInterface simConnectInterface;
-  fbwModelClass model;
+  FlyByWireModelClass model;
 
   bool getModelInputDataFromSim();
 

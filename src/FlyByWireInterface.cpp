@@ -1,11 +1,11 @@
 #include <iostream>
 
 #include "SimConnectData.h"
-#include "FlyByWire.h"
+#include "FlyByWireInterface.h"
 
 using namespace std;
 
-bool FlyByWire::connect()
+bool FlyByWireInterface::connect()
 {
   // initialize model
   model.initialize();
@@ -14,7 +14,7 @@ bool FlyByWire::connect()
   return simConnectInterface.connect();
 }
 
-void FlyByWire::disconnect()
+void FlyByWireInterface::disconnect()
 {
   // disconnect from sim connect
   simConnectInterface.disconnect();
@@ -23,7 +23,7 @@ void FlyByWire::disconnect()
   model.terminate();
 }
 
-bool FlyByWire::update(
+bool FlyByWireInterface::update(
   double sampleTime
 ) {
   bool result = true;
@@ -41,7 +41,7 @@ bool FlyByWire::update(
   return result;
 }
 
-bool FlyByWire::getModelInputDataFromSim()
+bool FlyByWireInterface::getModelInputDataFromSim()
 {
   // request data
   if (!simConnectInterface.requestData())
@@ -62,31 +62,31 @@ bool FlyByWire::getModelInputDataFromSim()
   SimInput simInput = simConnectInterface.getSimInput();
 
   // fill data into model
-  model.fbw_U.in_sim_simrawdata_nz_g = simData.nz_g;
-  model.fbw_U.in_sim_simrawdata_Theta_deg = simData.Theta_deg;
-  model.fbw_U.in_sim_simrawdata_Phi_deg = simData.Phi_deg;
-  model.fbw_U.in_sim_simrawdata_Vk_kt = simData.Vk_kt;
-  model.fbw_U.in_sim_simrawdata_radio_height_ft = simData.radio_height_ft;
-  model.fbw_U.in_sim_simrawdata_CG_percent_MAC = simData.CG_percent_MAC;
-  model.fbw_U.in_sim_simrawdata_qk_rad_s = simData.worldRotationVelocity.x;
-  model.fbw_U.in_sim_simrawdata_rk_rad_s = simData.worldRotationVelocity.y;
-  model.fbw_U.in_sim_simrawdata_pk_rad_s = simData.worldRotationVelocity.z;
+  model.FlyByWire_U.in.data.nz_g = simData.nz_g;
+  model.FlyByWire_U.in.data.Theta_deg = simData.Theta_deg;
+  model.FlyByWire_U.in.data.Phi_deg = simData.Phi_deg;
+  model.FlyByWire_U.in.data.Vk_kt = simData.Vk_kt;
+  model.FlyByWire_U.in.data.radio_height_ft = simData.radio_height_ft;
+  model.FlyByWire_U.in.data.CG_percent_MAC = simData.CG_percent_MAC;
+  model.FlyByWire_U.in.data.qk_rad_s = simData.worldRotationVelocity.x;
+  model.FlyByWire_U.in.data.rk_rad_s = simData.worldRotationVelocity.y;
+  model.FlyByWire_U.in.data.pk_rad_s = simData.worldRotationVelocity.z;
 
   // fill inputs into model
-  model.fbw_U.in_sim_simrawinput_delta_eta_pos = simInput.inputs[0];
-  model.fbw_U.in_sim_simrawinput_delta_xi_pos = simInput.inputs[1];
+  model.FlyByWire_U.in.input.delta_eta_pos = simInput.inputs[0];
+  model.FlyByWire_U.in.input.delta_xi_pos = simInput.inputs[1];
 
   // success
   return true;
 }
 
-bool FlyByWire::writeModelOuputDataToSim()
+bool FlyByWireInterface::writeModelOuputDataToSim()
 {
   // object to write
   SimOutput output = {
-    model.fbw_Y.out_sim_simrawoutput_eta_pos,
-    model.fbw_Y.out_sim_simrawoutput_iH_deg,
-    model.fbw_Y.out_sim_simrawoutput_xi_pos
+    model.FlyByWire_Y.out.sim.raw.output.eta_pos,
+    model.FlyByWire_Y.out.sim.raw.output.iH_deg,
+    model.FlyByWire_Y.out.sim.raw.output.xi_pos
   };
 
   // send data via sim connect

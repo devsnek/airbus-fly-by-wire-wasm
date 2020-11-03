@@ -151,23 +151,23 @@
     <None Include=".editorconfig" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\FlyByWire.cpp" />
+    <ClCompile Include="src\FlyByWireInterface.cpp" />
     <ClCompile Include="src\interface\SimConnectInterface.cpp" />
     <ClCompile Include="src\main.cpp" />
-    <ClCompile Include="src\model\fbw.cpp" />
-    <ClCompile Include="src\model\fbw_data.cpp" />
+    <ClCompile Include="src\model\FlyByWire.cpp" />
+    <ClCompile Include="src\model\FlyByWire_data.cpp" />
     <ClCompile Include="src\model\rtGetInf.cpp" />
     <ClCompile Include="src\model\rtGetNaN.cpp" />
     <ClCompile Include="src\model\rt_nonfinite.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\FlyByWire.h" />
+    <ClInclude Include="src\FlyByWireInterface.h" />
     <ClInclude Include="src\interface\SimConnectData.h" />
     <ClInclude Include="src\interface\SimConnectInterface.h" />
     <ClInclude Include="src\main.h" />
-    <ClInclude Include="src\model\fbw.h" />
-    <ClInclude Include="src\model\fbw_private.h" />
-    <ClInclude Include="src\model\fbw_types.h" />
+    <ClInclude Include="src\model\FlyByWire.h" />
+    <ClInclude Include="src\model\FlyByWire_private.h" />
+    <ClInclude Include="src\model\FlyByWire_types.h" />
     <ClInclude Include="src\model\rtGetInf.h" />
     <ClInclude Include="src\model\rtGetNaN.h" />
     <ClInclude Include="src\model\rtwtypes.h" />
