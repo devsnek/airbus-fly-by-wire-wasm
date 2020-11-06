@@ -11,9 +11,17 @@ typedef struct {
   real_T qk_rad_s;
   real_T rk_rad_s;
   real_T pk_rad_s;
+  real_T q_dot_rad_s2;
+  real_T r_dot_rad_s2;
+  real_T p_dot_rad_s2;
+  real_T iH_deg;
   real_T Vk_kt;
   real_T radio_height_ft;
   real_T CG_percent_MAC;
+  real_T gear_animation_pos_0;
+  real_T gear_animation_pos_1;
+  real_T gear_animation_pos_2;
+  real_T flaps_handle_index;
 } base_raw_data;
 
 #endif
@@ -24,6 +32,7 @@ typedef struct {
 typedef struct {
   real_T delta_eta_pos;
   real_T delta_xi_pos;
+  real_T delta_zeta_pos;
 } base_input;
 
 #endif
@@ -44,7 +53,9 @@ typedef struct {
 typedef struct {
   real_T eta_pos;
   real_T iH_deg;
+  real_T iH_deg_should_write;
   real_T xi_pos;
+  real_T zeta_pos;
 } base_output;
 
 #endif
@@ -70,9 +81,17 @@ typedef struct {
   real_T qk_deg_s;
   real_T rk_deg_s;
   real_T pk_deg_s;
+  real_T qk_dot_deg_s2;
+  real_T rk_dot_deg_s2;
+  real_T pk_dot_deg_s2;
+  real_T iH_deg;
   real_T Vk_kt;
   real_T radio_height_ft;
   real_T CG_percent_MAC;
+  real_T gear_strut_compression_0;
+  real_T gear_strut_compression_1;
+  real_T gear_strut_compression_2;
+  real_T flaps_handle_index;
 } base_data;
 
 #endif
@@ -105,6 +124,12 @@ typedef struct {
   real_T in_flight;
   real_T in_flare;
   real_T in_flight_gain;
+  real_T iH_deg_should_freeze;
+  real_T iH_deg_reset;
+  real_T iH_deg_reset_deg;
+  real_T iH_deg_should_write;
+  real_T iH_deg_rate_limit_up_deg_s;
+  real_T iH_deg_rate_limit_lo_deg_s;
 } base_pitch_data_computed;
 
 #endif
