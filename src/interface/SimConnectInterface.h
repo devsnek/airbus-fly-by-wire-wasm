@@ -43,6 +43,10 @@ public:
     SimOutput output
   );
 
+  bool sendData(
+    SimOutputNoTrim output
+  );
+
   SimData getSimData();
 
   SimInput getSimInput();
