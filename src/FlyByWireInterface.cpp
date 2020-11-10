@@ -65,20 +65,26 @@ bool FlyByWireInterface::getModelInputDataFromSim()
   model.FlyByWire_U.in.data.nz_g = simData.nz_g;
   model.FlyByWire_U.in.data.Theta_deg = simData.Theta_deg;
   model.FlyByWire_U.in.data.Phi_deg = simData.Phi_deg;
-  model.FlyByWire_U.in.data.qk_rad_s = simData.worldRotationVelocity.x;
-  model.FlyByWire_U.in.data.rk_rad_s = simData.worldRotationVelocity.y;
-  model.FlyByWire_U.in.data.pk_rad_s = simData.worldRotationVelocity.z;
+  model.FlyByWire_U.in.data.q_rad_s = simData.bodyRotationVelocity.x;
+  model.FlyByWire_U.in.data.r_rad_s = simData.bodyRotationVelocity.y;
+  model.FlyByWire_U.in.data.p_rad_s = simData.bodyRotationVelocity.z;
   model.FlyByWire_U.in.data.q_dot_rad_s2 = simData.bodyRotationAcceleration.x;
   model.FlyByWire_U.in.data.r_dot_rad_s2 = simData.bodyRotationAcceleration.y;
   model.FlyByWire_U.in.data.p_dot_rad_s2 = simData.bodyRotationAcceleration.z;
-  model.FlyByWire_U.in.data.iH_deg = simData.iH_deg;
-  model.FlyByWire_U.in.data.Vk_kt = simData.Vk_kt;
-  model.FlyByWire_U.in.data.radio_height_ft = simData.radio_height_ft;
+  model.FlyByWire_U.in.data.eta_trim_deg = simData.eta_trim_deg;
+  model.FlyByWire_U.in.data.zeta_trim_pos = simData.zeta_trim_pos;
+  model.FlyByWire_U.in.data.V_ias_kn = simData.V_ias_kn;
+  model.FlyByWire_U.in.data.V_tas_kn = simData.V_tas_kn;
+  model.FlyByWire_U.in.data.V_mach = simData.V_mach;
+  model.FlyByWire_U.in.data.H_ft = simData.H_ft;
+  model.FlyByWire_U.in.data.H_ind_ft = simData.H_ind_ft;
+  model.FlyByWire_U.in.data.H_radio_ft = simData.H_radio_ft;
   model.FlyByWire_U.in.data.CG_percent_MAC = simData.CG_percent_MAC;
   model.FlyByWire_U.in.data.gear_animation_pos_0 = simData.geat_animation_pos_0;
   model.FlyByWire_U.in.data.gear_animation_pos_1 = simData.geat_animation_pos_1;
   model.FlyByWire_U.in.data.gear_animation_pos_2 = simData.geat_animation_pos_2;
   model.FlyByWire_U.in.data.flaps_handle_index = simData.flaps_handle_index;
+  model.FlyByWire_U.in.data.autopilot_master_on = 0;
 
   // fill inputs into model
   model.FlyByWire_U.in.input.delta_eta_pos = simInput.inputs[0];
@@ -91,29 +97,25 @@ bool FlyByWireInterface::getModelInputDataFromSim()
 
 bool FlyByWireInterface::writeModelOuputDataToSim()
 {
-  if (model.FlyByWire_Y.out.sim.raw.output.iH_deg_should_write)
-  {
-    // object to write with trim
-    SimOutput output = {
-      model.FlyByWire_Y.out.sim.raw.output.eta_pos,
-      model.FlyByWire_Y.out.sim.raw.output.iH_deg,
-      model.FlyByWire_Y.out.sim.raw.output.xi_pos,
-      model.FlyByWire_Y.out.sim.raw.output.zeta_pos
-    };
+  // object to write with trim
+  SimOutput output = {
+    model.FlyByWire_Y.out.sim.raw.output.eta_pos,
+    model.FlyByWire_Y.out.sim.raw.output.xi_pos,
+    model.FlyByWire_Y.out.sim.raw.output.zeta_pos
+  };
 
-    // send data via sim connect
-    if (!simConnectInterface.sendData(output))
-    {
-      cout << "WASM: Write data failed!" << endl;
-      return false;
-    }
+  // send data via sim connect
+  if (!simConnectInterface.sendData(output))
+  {
+    cout << "WASM: Write data failed!" << endl;
+    return false;
   }
-  else {
+
+  if (model.FlyByWire_Y.out.sim.raw.output.eta_trim_deg_should_write)
+  {
     // object to write without trim
-    SimOutputNoTrim output = {
-      model.FlyByWire_Y.out.sim.raw.output.eta_pos,
-      model.FlyByWire_Y.out.sim.raw.output.xi_pos,
-      model.FlyByWire_Y.out.sim.raw.output.zeta_pos
+    SimOutputEtaTrim output = {
+      model.FlyByWire_Y.out.sim.raw.output.eta_trim_deg
     };
 
     // send data via sim connect

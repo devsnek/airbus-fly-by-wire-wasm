@@ -8,20 +8,28 @@ typedef struct {
   real_T nz_g;
   real_T Theta_deg;
   real_T Phi_deg;
-  real_T qk_rad_s;
-  real_T rk_rad_s;
-  real_T pk_rad_s;
+  real_T q_rad_s;
+  real_T r_rad_s;
+  real_T p_rad_s;
   real_T q_dot_rad_s2;
   real_T r_dot_rad_s2;
   real_T p_dot_rad_s2;
-  real_T iH_deg;
-  real_T Vk_kt;
-  real_T radio_height_ft;
+  real_T eta_trim_deg;
+  real_T zeta_trim_pos;
+  real_T alpha_deg;
+  real_T beta_deg;
+  real_T V_ias_kn;
+  real_T V_tas_kn;
+  real_T V_mach;
+  real_T H_ft;
+  real_T H_ind_ft;
+  real_T H_radio_ft;
   real_T CG_percent_MAC;
   real_T gear_animation_pos_0;
   real_T gear_animation_pos_1;
   real_T gear_animation_pos_2;
   real_T flaps_handle_index;
+  real_T autopilot_master_on;
 } base_raw_data;
 
 #endif
@@ -52,10 +60,11 @@ typedef struct {
 
 typedef struct {
   real_T eta_pos;
-  real_T iH_deg;
-  real_T iH_deg_should_write;
+  real_T eta_trim_deg;
+  boolean_T eta_trim_deg_should_write;
   real_T xi_pos;
   real_T zeta_pos;
+  real_T zeta_trim_pos;
 } base_output;
 
 #endif
@@ -78,20 +87,31 @@ typedef struct {
   real_T nz_g;
   real_T Theta_deg;
   real_T Phi_deg;
+  real_T q_deg_s;
+  real_T r_deg_s;
+  real_T p_deg_s;
   real_T qk_deg_s;
   real_T rk_deg_s;
   real_T pk_deg_s;
   real_T qk_dot_deg_s2;
   real_T rk_dot_deg_s2;
   real_T pk_dot_deg_s2;
-  real_T iH_deg;
-  real_T Vk_kt;
-  real_T radio_height_ft;
+  real_T eta_trim_deg;
+  real_T zeta_trim_pos;
+  real_T alpha_deg;
+  real_T beta_deg;
+  real_T V_ias_kn;
+  real_T V_tas_kn;
+  real_T V_mach;
+  real_T H_ft;
+  real_T H_ind_ft;
+  real_T H_radio_ft;
   real_T CG_percent_MAC;
   real_T gear_strut_compression_0;
   real_T gear_strut_compression_1;
   real_T gear_strut_compression_2;
   real_T flaps_handle_index;
+  real_T autopilot_master_on;
 } base_data;
 
 #endif
@@ -124,12 +144,17 @@ typedef struct {
   real_T in_flight;
   real_T in_flare;
   real_T in_flight_gain;
-  real_T iH_deg_should_freeze;
-  real_T iH_deg_reset;
-  real_T iH_deg_reset_deg;
-  real_T iH_deg_should_write;
-  real_T iH_deg_rate_limit_up_deg_s;
-  real_T iH_deg_rate_limit_lo_deg_s;
+  real_T nz_limit_up_g;
+  real_T nz_limit_lo_g;
+  boolean_T eta_trim_deg_should_freeze;
+  boolean_T eta_trim_deg_reset;
+  real_T eta_trim_deg_reset_deg;
+  boolean_T eta_trim_deg_should_write;
+  real_T eta_trim_deg_rate_limit_up_deg_s;
+  real_T eta_trim_deg_rate_limit_lo_deg_s;
+  real_T flare_Theta_deg;
+  real_T flare_Theta_c_deg;
+  real_T flare_Theta_c_rate_deg_s;
 } base_pitch_data_computed;
 
 #endif
@@ -178,7 +203,7 @@ typedef struct {
 
 typedef struct {
   real_T eta_pos;
-  real_T iH_deg;
+  real_T eta_trim_deg;
 } base_pitch_output;
 
 #endif
@@ -214,6 +239,7 @@ typedef struct {
   real_T pk_c_deg_s;
   real_T Phi_c_deg;
   real_T xi_pos;
+  real_T zeta_pos;
 } base_roll_normal;
 
 #endif
@@ -223,6 +249,7 @@ typedef struct {
 
 typedef struct {
   real_T xi_pos;
+  real_T zeta_pos;
 } base_roll_output;
 
 #endif

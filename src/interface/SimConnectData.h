@@ -8,16 +8,24 @@ struct SimData
   double nz_g;
   double Theta_deg;
   double Phi_deg;
-  SIMCONNECT_DATA_XYZ worldRotationVelocity;
+  SIMCONNECT_DATA_XYZ bodyRotationVelocity;
   SIMCONNECT_DATA_XYZ bodyRotationAcceleration;
-  double iH_deg;
-  double Vk_kt;
-  double radio_height_ft;
+  double eta_trim_deg;
+  double zeta_trim_pos;
+  double alpha_deg;
+  double beta_deg;
+  double V_ias_kn;
+  double V_tas_kn;
+  double V_mach;
+  double H_ft;
+  double H_ind_ft;
+  double H_radio_ft;
   double CG_percent_MAC;
   double geat_animation_pos_0;
   double geat_animation_pos_1;
   double geat_animation_pos_2;
   double flaps_handle_index;
+  bool autopilot_master_on;
 };
 
 struct SimInput
@@ -28,14 +36,11 @@ struct SimInput
 struct SimOutput
 {
   double eta;
-  double iH;
   double xi;
   double zeta;
 };
 
-struct SimOutputNoTrim
+struct SimOutputEtaTrim
 {
-  double eta;
-  double xi;
-  double zeta;
+  double eta_trim_deg;
 };

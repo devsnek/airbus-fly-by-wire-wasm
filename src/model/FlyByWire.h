@@ -13,10 +13,17 @@
 #include "rtGetInf.h"
 
 typedef struct {
-  real_T Filter_DSTATE;
+  real_T flare_Theta_c_deg;
+  real_T flare_Theta_c_rate_deg_s;
+} BlockIO_FlyByWire_T;
+
+typedef struct {
+  real_T DiscreteTransferFcn_states;
+  real_T DelayInput2_DSTATE;
+  real_T UD_DSTATE;
   real_T Integration_DSTATE;
   real_T Integration_DSTATE_e;
-  real_T DelayInput2_DSTATE;
+  real_T DelayInput2_DSTATE_h;
   real_T DiscreteTimeIntegrator_DSTATE;
   real_T PrevY;
   real_T PrevY_c;
@@ -46,6 +53,8 @@ typedef struct {
   uint8_T is_c3_FlyByWire;
   uint8_T is_active_c9_FlyByWire;
   uint8_T is_c9_FlyByWire;
+  uint8_T is_active_c2_FlyByWire;
+  uint8_T is_c2_FlyByWire;
   uint8_T is_active_c1_FlyByWire;
   uint8_T is_c1_FlyByWire;
   boolean_T condWasTrueAtLastTimeStep_1;
@@ -61,28 +70,26 @@ typedef struct {
 
 struct Parameters_FlyByWire_T_ {
   fbw_output fbw_output_MATLABStruct;
-  real_T PID_D;
-  real_T PID_InitialConditionForFilter;
+  real_T PID_DifferentiatorICPrevScaledInput;
   real_T PID_LowerSaturationLimit;
-  real_T PID_N;
-  real_T PID_P;
   real_T PID_UpperSaturationLimit;
   real_T Constant_Value;
+  real_T Constant_Value_m;
+  real_T Gain_Gain;
   real_T GainTheta_Gain;
   real_T GainPhi_Gain;
-  real_T Gain_Gain;
+  real_T Gain_Gain_n;
   real_T Gainqk_Gain;
   real_T Gain_Gain_l;
-  real_T Gainrk_Gain;
   real_T Gain_Gain_a;
   real_T Gainpk_Gain;
   real_T Gain_Gain_e;
   real_T Gainqk1_Gain;
   real_T Gain_Gain_aw;
-  real_T Gainrk1_Gain;
-  real_T Gain_Gain_n;
+  real_T Gain_Gain_nm;
   real_T Gainpk1_Gain;
   real_T Gainpk2_Gain;
+  real_T Gainpk3_Gain;
   real_T Gain_Gain_i;
   real_T Constant_Value_g;
   real_T Saturation_UpperSat;
@@ -104,6 +111,11 @@ struct Parameters_FlyByWire_T_ {
   real_T RateLimiterxi1_RisingLim;
   real_T RateLimiterxi1_FallingLim;
   real_T RateLimiterxi1_IC;
+  real_T DiscreteTransferFcn_NumCoef;
+  real_T DiscreteTransferFcn_DenCoef[2];
+  real_T DiscreteTransferFcn_InitialStates;
+  real_T Constant1_Value;
+  real_T Constant_Value_j;
   real_T Saturation_UpperSat_e;
   real_T Saturation_LowerSat_a;
   real_T RateLimit_RisingLim;
@@ -115,20 +127,30 @@ struct Parameters_FlyByWire_T_ {
   real_T K7659_Gain;
   real_T F193LUT_tableData[8];
   real_T F193LUT_bp01Data[8];
+  real_T Gain_Gain_c;
   real_T u7_Value;
   real_T K7765_Gain;
+  real_T Gain1_Gain_e;
   real_T Gain1_Gain_j;
-  real_T Constant2_Value;
+  real_T uDLookupTable_tableData[2];
+  real_T uDLookupTable_bp01Data[2];
   real_T Gain1_Gain_p;
+  real_T Saturation_UpperSat_d;
+  real_T Saturation_LowerSat_p;
   real_T Gain1_Gain_b;
   real_T RateLimiter_RisingLim;
   real_T RateLimiter_FallingLim;
   real_T RateLimiter_IC;
   real_T loaddemand_tableData[3];
   real_T loaddemand_bp01Data[3];
-  real_T Saturation_UpperSat_ec;
-  real_T Saturation_LowerSat_n;
-  real_T Filter_gainval;
+  real_T DelayInput2_InitialCondition;
+  real_T sampletime_WtEt;
+  real_T Switch_Threshold;
+  real_T PLUT_tableData[2];
+  real_T PLUT_bp01Data[2];
+  real_T DLUT_tableData[2];
+  real_T DLUT_bp01Data[2];
+  real_T TSamp_WtEt;
   real_T Limiter_RisingLim;
   real_T Limiter_FallingLim;
   real_T Limiter_IC;
@@ -137,14 +159,14 @@ struct Parameters_FlyByWire_T_ {
   real_T Integration_gainval;
   real_T Integration_UpperSat;
   real_T Integration_LowerSat;
-  real_T Saturation_UpperSat_j;
-  real_T Saturation_LowerSat_i;
-  real_T Constant_Value_j;
+  real_T Saturation_UpperSat_o;
+  real_T Saturation_LowerSat_j;
+  real_T Constant_Value_d;
   real_T Integration_gainval_c;
   real_T Integration_UpperSat_f;
   real_T Integration_LowerSat_f;
-  real_T DelayInput2_InitialCondition;
-  real_T sampletime_WtEt;
+  real_T DelayInput2_InitialCondition_d;
+  real_T sampletime_WtEt_f;
   real_T Saturation_UpperSat_p;
   real_T Saturation_LowerSat_h;
   real_T RateLimit_RisingLim_b;
@@ -161,9 +183,9 @@ struct Parameters_FlyByWire_T_ {
   real_T Gain2_Gain_i;
   real_T Gain1_Gain_mg;
   real_T pKp_Gain;
-  real_T Saturation_UpperSat_n;
-  real_T Saturation_LowerSat_n2;
-  real_T Constant_Value_h;
+  real_T Saturation_UpperSat_i;
+  real_T Saturation_LowerSat_o;
+  real_T Constant_Value_f;
   real_T RateLimitereta_RisingLim_j;
   real_T RateLimitereta_FallingLim_m;
   real_T RateLimitereta_IC_c;
@@ -185,8 +207,13 @@ struct Parameters_FlyByWire_T_ {
   real_T Gainxi1_Gain;
   real_T Limiterxi1_UpperSat;
   real_T Limiterxi1_LowerSat;
+  real_T Gainxi2_Gain;
+  real_T Limiterxi2_UpperSat;
+  real_T Limiterxi2_LowerSat;
   real_T Convertto_Gain;
   real_T Gain_Gain_ip;
+  uint8_T ManualSwitch_CurrentSetting;
+  uint8_T ManualSwitch1_CurrentSetting;
 };
 
 extern const fbw_input FlyByWire_rtZfbw_input;
@@ -202,6 +229,7 @@ class FlyByWireModelClass {
   ~FlyByWireModelClass();
  private:
   static Parameters_FlyByWire_T FlyByWire_P;
+  BlockIO_FlyByWire_T FlyByWire_B;
   D_Work_FlyByWire_T FlyByWire_DWork;
 };
 

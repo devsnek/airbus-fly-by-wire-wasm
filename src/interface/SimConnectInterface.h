@@ -44,7 +44,7 @@ public:
   );
 
   bool sendData(
-    SimOutputNoTrim output
+    SimOutputEtaTrim output
   );
 
   SimData getSimData();

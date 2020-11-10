@@ -18,6 +18,18 @@
     <ClCompile Include="src\main.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\interface\SimConnectInterface.cpp">
+      <Filter>src\interface</Filter>
+    </ClCompile>
+    <ClCompile Include="src\FlyByWireInterface.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\model\FlyByWire.cpp">
+      <Filter>src\model</Filter>
+    </ClCompile>
+    <ClCompile Include="src\model\FlyByWire_data.cpp">
+      <Filter>src\model</Filter>
+    </ClCompile>
     <ClCompile Include="src\model\rt_nonfinite.cpp">
       <Filter>src\model</Filter>
     </ClCompile>
@@ -27,22 +39,28 @@
     <ClCompile Include="src\model\rtGetNaN.cpp">
       <Filter>src\model</Filter>
     </ClCompile>
-    <ClCompile Include="src\interface\SimConnectInterface.cpp">
-      <Filter>src\interface</Filter>
-    </ClCompile>
-    <ClCompile Include="src\model\FlyByWire.cpp">
-      <Filter>src\model</Filter>
-    </ClCompile>
-    <ClCompile Include="src\model\FlyByWire_data.cpp">
-      <Filter>src\model</Filter>
-    </ClCompile>
-    <ClCompile Include="src\FlyByWireInterface.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\main.h">
       <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\interface\SimConnectInterface.h">
+      <Filter>src\interface</Filter>
+    </ClInclude>
+    <ClInclude Include="src\interface\SimConnectData.h">
+      <Filter>src\interface</Filter>
+    </ClInclude>
+    <ClInclude Include="src\FlyByWireInterface.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\model\FlyByWire.h">
+      <Filter>src\model</Filter>
+    </ClInclude>
+    <ClInclude Include="src\model\FlyByWire_private.h">
+      <Filter>src\model</Filter>
+    </ClInclude>
+    <ClInclude Include="src\model\FlyByWire_types.h">
+      <Filter>src\model</Filter>
     </ClInclude>
     <ClInclude Include="src\model\rt_nonfinite.h">
       <Filter>src\model</Filter>
@@ -55,24 +73,6 @@
     </ClInclude>
     <ClInclude Include="src\model\rtwtypes.h">
       <Filter>src\model</Filter>
-    </ClInclude>
-    <ClInclude Include="src\interface\SimConnectInterface.h">
-      <Filter>src\interface</Filter>
-    </ClInclude>
-    <ClInclude Include="src\interface\SimConnectData.h">
-      <Filter>src\interface</Filter>
-    </ClInclude>
-    <ClInclude Include="src\model\FlyByWire.h">
-      <Filter>src\model</Filter>
-    </ClInclude>
-    <ClInclude Include="src\model\FlyByWire_private.h">
-      <Filter>src\model</Filter>
-    </ClInclude>
-    <ClInclude Include="src\model\FlyByWire_types.h">
-      <Filter>src\model</Filter>
-    </ClInclude>
-    <ClInclude Include="src\FlyByWireInterface.h">
-      <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
