@@ -28,65 +28,6 @@ typedef char char_T;
 typedef unsigned char uchar_T;
 typedef char_T byte_T;
 
-#define CREAL_T
-
-typedef struct {
-  real32_T re;
-  real32_T im;
-} creal32_T;
-
-typedef struct {
-  real64_T re;
-  real64_T im;
-} creal64_T;
-
-typedef struct {
-  real_T re;
-  real_T im;
-} creal_T;
-
-#define CINT8_T
-
-typedef struct {
-  int8_T re;
-  int8_T im;
-} cint8_T;
-
-#define CUINT8_T
-
-typedef struct {
-  uint8_T re;
-  uint8_T im;
-} cuint8_T;
-
-#define CINT16_T
-
-typedef struct {
-  int16_T re;
-  int16_T im;
-} cint16_T;
-
-#define CUINT16_T
-
-typedef struct {
-  uint16_T re;
-  uint16_T im;
-} cuint16_T;
-
-#define CINT32_T
-
-typedef struct {
-  int32_T re;
-  int32_T im;
-} cint32_T;
-
-#define CUINT32_T
-
-typedef struct {
-  uint32_T re;
-  uint32_T im;
-} cuint32_T;
-
 #define MAX_int8_T                     ((int8_T)(127))
 #define MIN_int8_T                     ((int8_T)(-128))
 #define MAX_uint8_T                    ((uint8_T)(255U))

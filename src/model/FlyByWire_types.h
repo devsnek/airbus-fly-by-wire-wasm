@@ -18,6 +18,7 @@ typedef struct {
   real_T zeta_trim_pos;
   real_T alpha_deg;
   real_T beta_deg;
+  real_T beta_dot_deg_s;
   real_T V_ias_kn;
   real_T V_tas_kn;
   real_T V_mach;
@@ -100,6 +101,7 @@ typedef struct {
   real_T zeta_trim_pos;
   real_T alpha_deg;
   real_T beta_deg;
+  real_T beta_dot_deg_s;
   real_T V_ias_kn;
   real_T V_tas_kn;
   real_T V_mach;

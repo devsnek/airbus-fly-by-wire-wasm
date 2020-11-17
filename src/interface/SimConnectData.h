@@ -14,6 +14,7 @@ struct SimData
   double zeta_trim_pos;
   double alpha_deg;
   double beta_deg;
+  double beta_dot_deg_s;
   double V_ias_kn;
   double V_tas_kn;
   double V_mach;

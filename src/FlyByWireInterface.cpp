@@ -73,6 +73,9 @@ bool FlyByWireInterface::getModelInputDataFromSim()
   model.FlyByWire_U.in.data.p_dot_rad_s2 = simData.bodyRotationAcceleration.z;
   model.FlyByWire_U.in.data.eta_trim_deg = simData.eta_trim_deg;
   model.FlyByWire_U.in.data.zeta_trim_pos = simData.zeta_trim_pos;
+  model.FlyByWire_U.in.data.alpha_deg = simData.alpha_deg;
+  model.FlyByWire_U.in.data.beta_deg = simData.beta_deg;
+  model.FlyByWire_U.in.data.beta_dot_deg_s = simData.beta_dot_deg_s;
   model.FlyByWire_U.in.data.V_ias_kn = simData.V_ias_kn;
   model.FlyByWire_U.in.data.V_tas_kn = simData.V_tas_kn;
   model.FlyByWire_U.in.data.V_mach = simData.V_mach;

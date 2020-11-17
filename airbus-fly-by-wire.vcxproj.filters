@@ -30,15 +30,6 @@
     <ClCompile Include="src\model\FlyByWire_data.cpp">
       <Filter>src\model</Filter>
     </ClCompile>
-    <ClCompile Include="src\model\rt_nonfinite.cpp">
-      <Filter>src\model</Filter>
-    </ClCompile>
-    <ClCompile Include="src\model\rtGetInf.cpp">
-      <Filter>src\model</Filter>
-    </ClCompile>
-    <ClCompile Include="src\model\rtGetNaN.cpp">
-      <Filter>src\model</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\main.h">
@@ -60,15 +51,6 @@
       <Filter>src\model</Filter>
     </ClInclude>
     <ClInclude Include="src\model\FlyByWire_types.h">
-      <Filter>src\model</Filter>
-    </ClInclude>
-    <ClInclude Include="src\model\rt_nonfinite.h">
-      <Filter>src\model</Filter>
-    </ClInclude>
-    <ClInclude Include="src\model\rtGetInf.h">
-      <Filter>src\model</Filter>
-    </ClInclude>
-    <ClInclude Include="src\model\rtGetNaN.h">
       <Filter>src\model</Filter>
     </ClInclude>
     <ClInclude Include="src\model\rtwtypes.h">
