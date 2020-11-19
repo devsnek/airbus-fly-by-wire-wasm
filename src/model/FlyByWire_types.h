@@ -56,8 +56,8 @@ typedef struct {
 
 #endif
 
-#ifndef DEFINED_TYPEDEF_FOR_base_output_
-#define DEFINED_TYPEDEF_FOR_base_output_
+#ifndef DEFINED_TYPEDEF_FOR_base_raw_output_
+#define DEFINED_TYPEDEF_FOR_base_raw_output_
 
 typedef struct {
   real_T eta_pos;
@@ -66,7 +66,7 @@ typedef struct {
   real_T xi_pos;
   real_T zeta_pos;
   real_T zeta_trim_pos;
-} base_output;
+} base_raw_output;
 
 #endif
 
@@ -76,7 +76,7 @@ typedef struct {
 typedef struct {
   base_raw_data data;
   base_input input;
-  base_output output;
+  base_raw_output output;
 } base_raw;
 
 #endif
@@ -98,7 +98,7 @@ typedef struct {
   real_T rk_dot_deg_s2;
   real_T pk_dot_deg_s2;
   real_T eta_trim_deg;
-  real_T zeta_trim_pos;
+  real_T zeta_trim_deg;
   real_T alpha_deg;
   real_T beta_deg;
   real_T beta_dot_deg_s;
@@ -143,6 +143,7 @@ typedef struct {
 #define DEFINED_TYPEDEF_FOR_base_pitch_data_computed_
 
 typedef struct {
+  real_T delta_eta_deg;
   real_T in_flight;
   real_T in_flare;
   real_T in_flight_gain;
@@ -167,7 +168,7 @@ typedef struct {
 typedef struct {
   real_T Cstar_c_g;
   real_T Cstar_g;
-  real_T eta_dot_pos_s;
+  real_T eta_dot_deg_s;
 } base_pitch_normal;
 
 #endif
@@ -176,7 +177,7 @@ typedef struct {
 #define DEFINED_TYPEDEF_FOR_base_pitch_law_output_
 
 typedef struct {
-  real_T eta_dot_pos_s;
+  real_T eta_dot_deg_s;
 } base_pitch_law_output;
 
 #endif
@@ -195,7 +196,7 @@ typedef struct {
 #define DEFINED_TYPEDEF_FOR_base_pitch_integrated_
 
 typedef struct {
-  real_T eta_pos;
+  real_T eta_deg;
 } base_pitch_integrated;
 
 #endif
@@ -204,7 +205,7 @@ typedef struct {
 #define DEFINED_TYPEDEF_FOR_base_pitch_output_
 
 typedef struct {
-  real_T eta_pos;
+  real_T eta_deg;
   real_T eta_trim_deg;
 } base_pitch_output;
 
@@ -228,6 +229,8 @@ typedef struct {
 #define DEFINED_TYPEDEF_FOR_base_roll_data_computed_
 
 typedef struct {
+  real_T delta_xi_deg;
+  real_T delta_zeta_deg;
   real_T in_flight;
   real_T in_flight_gain;
 } base_roll_data_computed;
@@ -240,8 +243,8 @@ typedef struct {
 typedef struct {
   real_T pk_c_deg_s;
   real_T Phi_c_deg;
-  real_T xi_pos;
-  real_T zeta_pos;
+  real_T xi_deg;
+  real_T zeta_deg;
 } base_roll_normal;
 
 #endif
@@ -250,8 +253,8 @@ typedef struct {
 #define DEFINED_TYPEDEF_FOR_base_roll_output_
 
 typedef struct {
-  real_T xi_pos;
-  real_T zeta_pos;
+  real_T xi_deg;
+  real_T zeta_deg;
 } base_roll_output;
 
 #endif
