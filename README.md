@@ -24,6 +24,14 @@ To test drive the custom fly-by-wire system with the A32NX you need to do the fo
 - get the latest stable release that is compatible with your sim version from [https://flybywiresim.com/a32nx](https://flybywiresim.com/a32nx)
 - install it as described, result is usually that you have the folder `%LOCALAPPDATA%\Packages\Microsoft.FlightSimulator_8wekyb3d8bbwe\LocalCache\Packages\Community\A32NX`
 - copy the file `external\airbus-custom-fbw\SimObjects\AirPlanes\Asobo_A320_NEO\panel\airbus-fly-by-wire.wasm` to the A32NX in your community folder `%LOCALAPPDATA%\Packages\Microsoft.FlightSimulator_8wekyb3d8bbwe\LocalCache\Packages\Community\A32NX\SimObjects\AirPlanes\Asobo_A320_NEO\panel`
+- adapt the file `%LOCALAPPDATA%\Packages\Microsoft.FlightSimulator_8wekyb3d8bbwe\LocalCache\Packages\Community\A32NX\SimObjects\AirPlanes\Asobo_A320_NEO\flight_model.cfg` and set the following:
+```
+[AIRPLANE_GEOMETRY]
+fly_by_wire = 0
+
+[STALL PROTECTION]
+stall_protection = 0
+```
 - adapt the file `%LOCALAPPDATA%\Packages\Microsoft.FlightSimulator_8wekyb3d8bbwe\LocalCache\Packages\Community\A32NX\SimObjects\AirPlanes\Asobo_A320_NEO\panel\panel.cfg` and add the following, where `<NN>` is last `Vcockpit` entry + `1` (as of today the right replacement for `<NN>` is `17`):
 ```
 [Vcockpit<NN>]
