@@ -29,7 +29,7 @@ bool FlyByWireInterface::update(
   bool result = true;
 
   // get data & inputs
-  result &= getModelInputDataFromSim();
+  result &= getModelInputDataFromSim(sampleTime);
 
   // step model
   model.step();
@@ -41,7 +41,9 @@ bool FlyByWireInterface::update(
   return result;
 }
 
-bool FlyByWireInterface::getModelInputDataFromSim()
+bool FlyByWireInterface::getModelInputDataFromSim(
+  double sampleTime
+)
 {
   // request data
   if (!simConnectInterface.requestData())
@@ -60,6 +62,9 @@ bool FlyByWireInterface::getModelInputDataFromSim()
   // get data from interface
   SimData simData = simConnectInterface.getSimData();
   SimInput simInput = simConnectInterface.getSimInput();
+
+  // fill time into model
+  model.FlyByWire_U.in.time.dt = sampleTime;
 
   // fill data into model
   model.FlyByWire_U.in.data.nz_g = simData.nz_g;

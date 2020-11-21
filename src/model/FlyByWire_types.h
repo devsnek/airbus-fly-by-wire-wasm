@@ -1,6 +1,16 @@
 #ifndef RTW_HEADER_FlyByWire_types_h_
 #define RTW_HEADER_FlyByWire_types_h_
 #include "rtwtypes.h"
+#include "zero_crossing_types.h"
+#ifndef DEFINED_TYPEDEF_FOR_base_raw_time_
+#define DEFINED_TYPEDEF_FOR_base_raw_time_
+
+typedef struct {
+  real_T dt;
+} base_raw_time;
+
+#endif
+
 #ifndef DEFINED_TYPEDEF_FOR_base_raw_data_
 #define DEFINED_TYPEDEF_FOR_base_raw_data_
 
@@ -50,6 +60,7 @@ typedef struct {
 #define DEFINED_TYPEDEF_FOR_fbw_input_
 
 typedef struct {
+  base_raw_time time;
   base_raw_data data;
   base_input input;
 } fbw_input;
@@ -74,10 +85,21 @@ typedef struct {
 #define DEFINED_TYPEDEF_FOR_base_raw_
 
 typedef struct {
+  base_raw_time time;
   base_raw_data data;
   base_input input;
   base_raw_output output;
 } base_raw;
+
+#endif
+
+#ifndef DEFINED_TYPEDEF_FOR_base_time_
+#define DEFINED_TYPEDEF_FOR_base_time_
+
+typedef struct {
+  real_T dt;
+  real_T monotonic_time;
+} base_time;
 
 #endif
 
@@ -132,6 +154,7 @@ typedef struct {
 
 typedef struct {
   base_raw raw;
+  base_time time;
   base_data data;
   base_data_computed data_computed;
   base_input input;
@@ -166,7 +189,7 @@ typedef struct {
 #define DEFINED_TYPEDEF_FOR_base_pitch_normal_
 
 typedef struct {
-  real_T Cstar_c_g;
+  real_T nz_c_g;
   real_T Cstar_g;
   real_T eta_dot_deg_s;
 } base_pitch_normal;
@@ -179,16 +202,6 @@ typedef struct {
 typedef struct {
   real_T eta_dot_deg_s;
 } base_pitch_law_output;
-
-#endif
-
-#ifndef DEFINED_TYPEDEF_FOR_base_pitch_protection_
-#define DEFINED_TYPEDEF_FOR_base_pitch_protection_
-
-typedef struct {
-  base_pitch_law_output attitude_min;
-  base_pitch_law_output attitude_max;
-} base_pitch_protection;
 
 #endif
 
@@ -217,7 +230,6 @@ typedef struct {
 typedef struct {
   base_pitch_data_computed data_computed;
   base_pitch_normal law_normal;
-  base_pitch_protection law_protection;
   base_pitch_law_output vote;
   base_pitch_integrated integrated;
   base_pitch_output output;

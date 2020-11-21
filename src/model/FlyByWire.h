@@ -5,42 +5,41 @@
 #ifndef FlyByWire_COMMON_INCLUDES_
 # define FlyByWire_COMMON_INCLUDES_
 #include "rtwtypes.h"
+#include "zero_crossing_types.h"
 #endif
 
 #include "FlyByWire_types.h"
+#include "rt_zcfcn.h"
 
 typedef struct {
+  real_T in_flight;
   real_T flare_Theta_c_deg;
   real_T flare_Theta_c_rate_deg_s;
 } BlockIO_FlyByWire_T;
 
 typedef struct {
-  real_T DiscreteTransferFcn_states;
-  real_T DelayInput2_DSTATE;
-  real_T UD_DSTATE;
-  real_T Integration_DSTATE;
-  real_T Integration_DSTATE_e;
-  real_T DelayInput2_DSTATE_h;
-  real_T DiscreteTimeIntegrator_DSTATE;
+  real_T Delay_DSTATE;
+  real_T Delay_DSTATE_h;
+  real_T Delay1_DSTATE;
+  real_T Delay_DSTATE_hc;
+  real_T Delay_DSTATE_f;
+  real_T Delay_DSTATE_c;
+  real_T Delay_DSTATE_cf;
+  real_T Delay_DSTATE_f1;
+  real_T Delay_DSTATE_b;
+  real_T Delay_DSTATE_m;
+  real_T Delay_DSTATE_l;
+  real_T Delay_DSTATE_ho;
+  real_T Delay_DSTATE_cp;
   real_T DiscreteTransferFcn2_states;
   real_T DiscreteTransferFcn1_states;
-  real_T PrevY;
-  real_T PrevY_c;
-  real_T PrevY_f;
-  real_T PrevY_h;
-  real_T PrevY_j;
-  real_T PrevY_p;
-  real_T PrevY_d;
-  real_T PrevY_jg;
-  real_T PrevY_g;
-  int32_T chartAbsoluteTimeCounter;
-  int32_T durationLastReferenceTick_1;
-  int8_T Integration_PrevResetState;
-  int8_T Integration_PrevResetState_p;
-  int8_T DiscreteTimeIntegrator_PrevResetState;
-  uint8_T Integration_IC_LOADING;
-  uint8_T Integration_IC_LOADING_a;
-  uint8_T DiscreteTimeIntegrator_IC_LOADING;
+  real_T Delay_DSTATE_g;
+  real_T Delay_DSTATE_gd;
+  real_T Delay_DSTATE_fz;
+  real_T on_ground_time;
+  uint8_T icLoad;
+  uint8_T icLoad_b;
+  uint8_T icLoad_m;
   uint8_T is_active_c5_FlyByWire;
   uint8_T is_c5_FlyByWire;
   uint8_T is_active_c7_FlyByWire;
@@ -55,8 +54,13 @@ typedef struct {
   uint8_T is_c2_FlyByWire;
   uint8_T is_active_c1_FlyByWire;
   uint8_T is_c1_FlyByWire;
-  boolean_T condWasTrueAtLastTimeStep_1;
 } D_Work_FlyByWire_T;
+
+typedef struct {
+  ZCSigState Delay_Reset_ZCE;
+  ZCSigState Delay_Reset_ZCE_f;
+  ZCSigState Delay_Reset_ZCE_a;
+} PrevZCSigStates_FlyByWire_T;
 
 typedef struct {
   fbw_input in;
@@ -68,9 +72,41 @@ typedef struct {
 
 struct Parameters_FlyByWire_T_ {
   fbw_output fbw_output_MATLABStruct;
-  real_T PID_DifferentiatorICPrevScaledInput;
-  real_T PID_LowerSaturationLimit;
-  real_T PID_UpperSaturationLimit;
+  real_T LagFilter_C1;
+  real_T DiscreteDerivativeVariableTs_Gain;
+  real_T DiscreteTimeIntegratorVariableTs_Gain;
+  real_T DiscreteTimeIntegratorVariableTs_Gain_g;
+  real_T DiscreteTimeIntegratorVariableTs_Gain_d;
+  real_T RateLimiterVariableTs_InitialCondition;
+  real_T RateLimiterDynamicVariableTs_InitialCondition;
+  real_T RateLimiterVariableTs_InitialCondition_c;
+  real_T DiscreteDerivativeVariableTs_InitialCondition;
+  real_T RateLimiterDynamicVariableTs_InitialCondition_i;
+  real_T RateLimiterVariableTs_InitialCondition_f;
+  real_T RateLimiterVariableTs_InitialCondition_fc;
+  real_T RateLimitereta_InitialCondition;
+  real_T RateLimiterxi_InitialCondition;
+  real_T RateLimiterzeta_InitialCondition;
+  real_T DiscreteTimeIntegratorVariableTs_LowerLimit;
+  real_T DiscreteTimeIntegratorVariableTs_LowerLimit_g;
+  real_T DiscreteTimeIntegratorVariableTs_LowerLimit_k;
+  real_T DiscreteTimeIntegratorVariableTs_UpperLimit;
+  real_T DiscreteTimeIntegratorVariableTs_UpperLimit_j;
+  real_T DiscreteTimeIntegratorVariableTs_UpperLimit_d;
+  real_T RateLimiterVariableTs_lo;
+  real_T RateLimiterVariableTs_lo_f;
+  real_T RateLimiterVariableTs_lo_fs;
+  real_T RateLimiterVariableTs_lo_p;
+  real_T RateLimitereta_lo;
+  real_T RateLimiterxi_lo;
+  real_T RateLimiterzeta_lo;
+  real_T RateLimiterVariableTs_up;
+  real_T RateLimiterVariableTs_up_f;
+  real_T RateLimiterVariableTs_up_k;
+  real_T RateLimiterVariableTs_up_m;
+  real_T RateLimitereta_up;
+  real_T RateLimiterxi_up;
+  real_T RateLimiterzeta_up;
   real_T Constant_Value;
   real_T Constant_Value_m;
   real_T Gain_Gain;
@@ -104,39 +140,18 @@ struct Parameters_FlyByWire_T_ {
   real_T Gain2_Gain;
   real_T Saturation2_UpperSat_b;
   real_T Saturation2_LowerSat_g;
-  real_T RateLimitereta_RisingLim;
-  real_T RateLimitereta_FallingLim;
-  real_T RateLimitereta_IC;
+  real_T Delay_InitialCondition;
   real_T Gaineta_Gain;
-  real_T RateLimiterxi_RisingLim;
-  real_T RateLimiterxi_FallingLim;
-  real_T RateLimiterxi_IC;
   real_T Gainxi_Gain;
-  real_T RateLimiterxi1_RisingLim;
-  real_T RateLimiterxi1_FallingLim;
-  real_T RateLimiterxi1_IC;
   real_T Gainxi1_Gain;
   real_T Gain_Gain_d;
-  real_T DiscreteTransferFcn_NumCoef;
-  real_T DiscreteTransferFcn_DenCoef[2];
-  real_T DiscreteTransferFcn_InitialStates;
+  real_T Delay_InitialCondition_m;
+  real_T Constant_Value_l;
+  real_T Delay1_InitialCondition;
   real_T Constant1_Value;
   real_T Constant_Value_j;
   real_T Saturation_UpperSat_er;
   real_T Saturation_LowerSat_a;
-  real_T RateLimit_RisingLim;
-  real_T RateLimit_FallingLim;
-  real_T RateLimit_IC;
-  real_T DelayInput2_InitialCondition;
-  real_T sampletime_WtEt;
-  real_T K7857_Gain;
-  real_T K7958_Gain;
-  real_T u1_Value;
-  real_T K7659_Gain;
-  real_T F193LUT_tableData[8];
-  real_T F193LUT_bp01Data[8];
-  real_T u7_Value;
-  real_T K7765_Gain;
   real_T Gain1_Gain_j;
   real_T uDLookupTable_tableData[5];
   real_T uDLookupTable_bp01Data[5];
@@ -156,39 +171,24 @@ struct Parameters_FlyByWire_T_ {
   real_T PLUT_bp01Data[2];
   real_T DLUT_tableData[2];
   real_T DLUT_bp01Data[2];
-  real_T TSamp_WtEt;
-  real_T Integration_gainval;
-  real_T Integration_UpperSat;
-  real_T Integration_LowerSat;
   real_T Saturation_UpperSat_j;
   real_T Saturation_LowerSat_c;
-  real_T Constant_Value_o;
-  real_T Integration_gainval_c;
-  real_T Integration_UpperSat_f;
-  real_T Integration_LowerSat_f;
-  real_T DelayInput2_InitialCondition_d;
-  real_T sampletime_WtEt_f;
+  real_T Saturation_UpperSat_o;
+  real_T Saturation_LowerSat_el;
+  real_T Constant_Value_c;
+  real_T Gain_Gain_ip;
   real_T Gain_Gain_c;
   real_T Gain1_Gain_jh;
   real_T Saturation_UpperSat_p;
   real_T Saturation_LowerSat_h;
-  real_T RateLimit_RisingLim_b;
-  real_T RateLimit_FallingLim_m;
-  real_T RateLimit_IC_d;
   real_T Gain1_Gain_m;
   real_T BankAngleProtection_tableData[7];
   real_T BankAngleProtection_bp01Data[7];
   real_T Saturation_UpperSat_n;
   real_T Saturation_LowerSat_o;
-  real_T DiscreteTimeIntegrator_gainval;
-  real_T DiscreteTimeIntegrator_UpperSat;
-  real_T DiscreteTimeIntegrator_LowerSat;
   real_T Gain2_Gain_i;
   real_T Gain1_Gain_mg;
   real_T pKp_Gain;
-  real_T RateLimiter2_RisingLim;
-  real_T RateLimiter2_FallingLim;
-  real_T RateLimiter2_IC;
   real_T Gain5_Gain;
   real_T Constant2_Value;
   real_T Gain1_Gain_br;
@@ -209,37 +209,27 @@ struct Parameters_FlyByWire_T_ {
   real_T Gain6_Gain_k;
   real_T Saturation2_UpperSat_e;
   real_T Saturation2_LowerSat_gp;
-  real_T Saturation_UpperSat_i;
-  real_T Saturation_LowerSat_al;
-  real_T Constant_Value_c;
-  real_T Saturation_UpperSat_id;
-  real_T Saturation_LowerSat_n;
-  real_T Constant_Value_f;
-  real_T RateLimitereta_RisingLim_j;
-  real_T RateLimitereta_FallingLim_m;
-  real_T RateLimitereta_IC_c;
+  real_T Saturation_UpperSat_c;
+  real_T Saturation_LowerSat_aa;
+  real_T Constant_Value_i;
+  real_T Saturation_UpperSat_k;
+  real_T Saturation_LowerSat_cq;
+  real_T Constant_Value_p;
   real_T Gaineta_Gain_d;
   real_T Limitereta_UpperSat;
   real_T Limitereta_LowerSat;
   real_T GainiH_Gain;
   real_T LimiteriH_UpperSat;
   real_T LimiteriH_LowerSat;
-  real_T RateLimiterxi_RisingLim_n;
-  real_T RateLimiterxi_FallingLim_f;
-  real_T RateLimiterxi_IC_c;
   real_T Gainxi_Gain_n;
   real_T Limiterxi_UpperSat;
   real_T Limiterxi_LowerSat;
-  real_T RateLimiterxi1_RisingLim_k;
-  real_T RateLimiterxi1_FallingLim_o;
-  real_T RateLimiterxi1_IC_i;
   real_T Gainxi1_Gain_e;
   real_T Limiterxi1_UpperSat;
   real_T Limiterxi1_LowerSat;
   real_T Gainxi2_Gain;
   real_T Limiterxi2_UpperSat;
   real_T Limiterxi2_LowerSat;
-  real_T Gain_Gain_ip;
   uint8_T ManualSwitch_CurrentSetting;
   uint8_T ManualSwitch1_CurrentSetting;
 };
@@ -259,6 +249,7 @@ class FlyByWireModelClass {
   static Parameters_FlyByWire_T FlyByWire_P;
   BlockIO_FlyByWire_T FlyByWire_B;
   D_Work_FlyByWire_T FlyByWire_DWork;
+  PrevZCSigStates_FlyByWire_T FlyByWire_PrevZCSigState;
 };
 
 #endif

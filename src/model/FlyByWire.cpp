@@ -13,7 +13,8 @@ const uint8_T FlyByWire_IN_Ground = 6U;
 const uint8_T FlyByWire_IN_frozen = 1U;
 const uint8_T FlyByWire_IN_running = 2U;
 const uint8_T FlyByWire_IN_Flight = 1U;
-const uint8_T FlyByWire_IN_Ground_p = 2U;
+const uint8_T FlyByWire_IN_FlightToGroundTransition = 2U;
+const uint8_T FlyByWire_IN_Ground_p = 3U;
 const uint8_T FlyByWire_IN_automatic = 1U;
 const uint8_T FlyByWire_IN_manual = 2U;
 const uint8_T FlyByWire_IN_reset = 3U;
@@ -25,6 +26,10 @@ const uint8_T FlyByWire_IN_GroundMode = 2U;
 const fbw_output FlyByWire_rtZfbw_output = {
   {
     {
+      {
+        0.0
+      },
+
       {
         0.0,
         0.0,
@@ -72,6 +77,11 @@ const fbw_output FlyByWire_rtZfbw_output = {
 
     {
       0.0,
+      0.0
+    },
+
+    {
+      0.0,
       0.0,
       0.0,
       0.0,
@@ -136,16 +146,6 @@ const fbw_output FlyByWire_rtZfbw_output = {
       0.0,
       0.0,
       0.0
-    },
-
-    {
-      {
-        0.0
-      },
-
-      {
-        0.0
-      }
     },
 
     {
@@ -184,8 +184,8 @@ const fbw_output FlyByWire_rtZfbw_output = {
   }
 } ;
 
-const fbw_input FlyByWire_rtZfbw_input = { { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 }, { 0.0, 0.0, 0.0 } };
+const fbw_input FlyByWire_rtZfbw_input = { { 0.0 }, { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 }, { 0.0, 0.0, 0.0 } };
 
 real_T look1_binlxpw(real_T u0, const real_T bp0[], const real_T table[], uint32_T maxIndex)
 {
@@ -221,26 +221,23 @@ real_T look1_binlxpw(real_T u0, const real_T bp0[], const real_T table[], uint32
 
 void FlyByWireModelClass::step()
 {
-  real_T numAccum;
   real_T denAccum;
+  real_T Theta;
+  real_T Phi;
   real_T result[3];
   real_T result_0[3];
-  real_T rtb_Integration_m;
-  real_T rtb_LimiteriH;
-  real_T rtb_PProdOut;
   real_T rtb_Limiterxi;
-  real_T rtb_BusAssignment_f_roll_law_normal_xi_deg;
-  real_T rtb_BusAssignment_f_roll_law_normal_zeta_deg;
+  real_T rtb_Limiterxi2;
+  real_T rtb_Limitereta;
+  real_T rtb_Minup;
   real_T rtb_GainTheta;
   real_T rtb_GainPhi;
   real_T rtb_Gainqk;
   real_T rtb_Gain;
   real_T rtb_Gainpk;
-  real_T rtb_Gaineta;
-  real_T rtb_Gainxi;
-  real_T rtb_Gainxi1;
   int32_T rtb_on_ground;
-  int32_T rtb_in_flight_o;
+  real_T rtb_BusAssignment_a_sim_input_delta_xi_pos;
+  real_T rtb_BusAssignment_a_sim_input_delta_zeta_pos;
   int32_T rtb_in_flare;
   real_T rtb_nz_limit_up_g;
   int32_T rtb_nz_limit_lo_g;
@@ -250,134 +247,100 @@ void FlyByWireModelClass::step()
   boolean_T rtb_eta_trim_deg_should_write;
   real_T rtb_eta_trim_deg_rate_limit_lo_deg_s;
   real_T rtb_BusAssignment_c_pitch_data_computed_delta_eta_deg;
-  real_T rtb_BusAssignment_c_pitch_data_computed_in_flight_gain;
   real_T rtb_Gain1_b;
-  real_T rtb_BusAssignment_mv_pitch_output_eta_deg;
+  real_T rtb_Sum5;
+  real_T rtb_BusAssignment_m_pitch_output_eta_deg;
   int32_T rtb_in_flight;
-  real_T rtb_BusAssignment_l_roll_output_zeta_deg;
   real_T rtb_ManualSwitch;
-  real_T rtb_deltafalllimit;
-  real_T rtb_deltafalllimit_a;
-  real_T BusAssignment_sim_data_zeta_trim_deg;
-  real_T BusAssignment_p_roll_data_computed_delta_xi_deg;
-  real_T BusAssignment_p_roll_data_computed_delta_zeta_deg;
-  real_T BusAssignment_p_roll_data_computed_in_flight_gain;
+  real_T BusAssignment_roll_data_computed_delta_xi_deg;
+  real_T BusAssignment_roll_data_computed_delta_zeta_deg;
   real_T result_tmp;
   real_T tmp[9];
+  real_T u0;
+  real_T u1;
   rtb_GainTheta = FlyByWire_P.GainTheta_Gain * FlyByWire_U.in.data.Theta_deg;
   rtb_GainPhi = FlyByWire_P.GainPhi_Gain * FlyByWire_U.in.data.Phi_deg;
   rtb_Gainqk = FlyByWire_P.Gain_Gain_n * FlyByWire_U.in.data.q_rad_s * FlyByWire_P.Gainqk_Gain;
   rtb_Gain = FlyByWire_P.Gain_Gain_l * FlyByWire_U.in.data.r_rad_s;
   rtb_Gainpk = FlyByWire_P.Gain_Gain_a * FlyByWire_U.in.data.p_rad_s * FlyByWire_P.Gainpk_Gain;
-  rtb_Gaineta = 0.017453292519943295 * rtb_GainTheta;
-  rtb_Gainxi1 = 0.017453292519943295 * rtb_GainPhi;
-  rtb_Gainxi = std::tan(rtb_Gaineta);
-  result_tmp = std::sin(rtb_Gainxi1);
-  rtb_Gainxi1 = std::cos(rtb_Gainxi1);
+  Theta = 0.017453292519943295 * rtb_GainTheta;
+  Phi = 0.017453292519943295 * rtb_GainPhi;
+  result_tmp = std::tan(Theta);
+  rtb_Minup = std::sin(Phi);
+  Phi = std::cos(Phi);
   tmp[0] = 1.0;
-  tmp[3] = result_tmp * rtb_Gainxi;
-  tmp[6] = rtb_Gainxi1 * rtb_Gainxi;
+  tmp[3] = rtb_Minup * result_tmp;
+  tmp[6] = Phi * result_tmp;
   tmp[1] = 0.0;
-  tmp[4] = rtb_Gainxi1;
-  tmp[7] = -result_tmp;
+  tmp[4] = Phi;
+  tmp[7] = -rtb_Minup;
   tmp[2] = 0.0;
-  rtb_deltafalllimit = 1.0 / std::cos(rtb_Gaineta);
-  tmp[5] = rtb_deltafalllimit * result_tmp;
-  tmp[8] = rtb_deltafalllimit * rtb_Gainxi1;
+  rtb_Limiterxi = 1.0 / std::cos(Theta);
+  tmp[5] = rtb_Limiterxi * rtb_Minup;
+  tmp[8] = rtb_Limiterxi * Phi;
   for (rtb_on_ground = 0; rtb_on_ground < 3; rtb_on_ground++) {
     result[rtb_on_ground] = tmp[rtb_on_ground + 6] * rtb_Gain + (tmp[rtb_on_ground + 3] * rtb_Gainqk + tmp[rtb_on_ground]
       * rtb_Gainpk);
   }
 
-  rtb_Gaineta = 0.017453292519943295 * rtb_GainTheta;
-  rtb_Gainxi1 = 0.017453292519943295 * rtb_GainPhi;
-  rtb_Gainxi = std::tan(rtb_Gaineta);
-  result_tmp = std::sin(rtb_Gainxi1);
-  rtb_Gainxi1 = std::cos(rtb_Gainxi1);
+  Theta = 0.017453292519943295 * rtb_GainTheta;
+  Phi = 0.017453292519943295 * rtb_GainPhi;
+  result_tmp = std::tan(Theta);
+  rtb_Minup = std::sin(Phi);
+  Phi = std::cos(Phi);
   tmp[0] = 1.0;
-  tmp[3] = result_tmp * rtb_Gainxi;
-  tmp[6] = rtb_Gainxi1 * rtb_Gainxi;
+  tmp[3] = rtb_Minup * result_tmp;
+  tmp[6] = Phi * result_tmp;
   tmp[1] = 0.0;
-  tmp[4] = rtb_Gainxi1;
-  tmp[7] = -result_tmp;
+  tmp[4] = Phi;
+  tmp[7] = -rtb_Minup;
   tmp[2] = 0.0;
-  rtb_deltafalllimit = 1.0 / std::cos(rtb_Gaineta);
-  tmp[5] = rtb_deltafalllimit * result_tmp;
-  tmp[8] = rtb_deltafalllimit * rtb_Gainxi1;
-  result_tmp = FlyByWire_P.Gain_Gain_nm * FlyByWire_U.in.data.p_dot_rad_s2 * FlyByWire_P.Gainpk1_Gain;
-  rtb_Gaineta = FlyByWire_P.Gain_Gain_e * FlyByWire_U.in.data.q_dot_rad_s2 * FlyByWire_P.Gainqk1_Gain;
-  rtb_Gainxi = FlyByWire_P.Gain_Gain_aw * FlyByWire_U.in.data.r_dot_rad_s2;
+  rtb_Limiterxi = 1.0 / std::cos(Theta);
+  tmp[5] = rtb_Limiterxi * rtb_Minup;
+  tmp[8] = rtb_Limiterxi * Phi;
+  rtb_Minup = FlyByWire_P.Gain_Gain_nm * FlyByWire_U.in.data.p_dot_rad_s2 * FlyByWire_P.Gainpk1_Gain;
+  Theta = FlyByWire_P.Gain_Gain_e * FlyByWire_U.in.data.q_dot_rad_s2 * FlyByWire_P.Gainqk1_Gain;
+  result_tmp = FlyByWire_P.Gain_Gain_aw * FlyByWire_U.in.data.r_dot_rad_s2;
   for (rtb_on_ground = 0; rtb_on_ground < 3; rtb_on_ground++) {
-    result_0[rtb_on_ground] = tmp[rtb_on_ground + 6] * rtb_Gainxi + (tmp[rtb_on_ground + 3] * rtb_Gaineta +
-      tmp[rtb_on_ground] * result_tmp);
+    result_0[rtb_on_ground] = tmp[rtb_on_ground + 6] * result_tmp + (tmp[rtb_on_ground + 3] * Theta + tmp[rtb_on_ground]
+      * rtb_Minup);
   }
 
-  rtb_Limiterxi = FlyByWire_P.Gainpk2_Gain * FlyByWire_U.in.data.eta_trim_deg;
-  rtb_deltafalllimit_a = FlyByWire_P.Gain1_Gain * FlyByWire_U.in.data.gear_animation_pos_1 -
-    FlyByWire_P.Constant_Value_g;
-  if (rtb_deltafalllimit_a > FlyByWire_P.Saturation1_UpperSat) {
-    rtb_deltafalllimit_a = FlyByWire_P.Saturation1_UpperSat;
+  rtb_Minup = FlyByWire_P.Gainpk2_Gain * FlyByWire_U.in.data.eta_trim_deg;
+  rtb_Sum5 = FlyByWire_P.Gain1_Gain * FlyByWire_U.in.data.gear_animation_pos_1 - FlyByWire_P.Constant_Value_g;
+  if (rtb_Sum5 > FlyByWire_P.Saturation1_UpperSat) {
+    rtb_Sum5 = FlyByWire_P.Saturation1_UpperSat;
   } else {
-    if (rtb_deltafalllimit_a < FlyByWire_P.Saturation1_LowerSat) {
-      rtb_deltafalllimit_a = FlyByWire_P.Saturation1_LowerSat;
+    if (rtb_Sum5 < FlyByWire_P.Saturation1_LowerSat) {
+      rtb_Sum5 = FlyByWire_P.Saturation1_LowerSat;
     }
   }
 
-  result_tmp = FlyByWire_P.Gain2_Gain * FlyByWire_U.in.data.gear_animation_pos_2 - FlyByWire_P.Constant_Value_g;
-  if (result_tmp > FlyByWire_P.Saturation2_UpperSat_b) {
-    result_tmp = FlyByWire_P.Saturation2_UpperSat_b;
+  FlyByWire_Y.out.sim.data.gear_strut_compression_1 = rtb_Sum5;
+  Theta = FlyByWire_P.Gain2_Gain * FlyByWire_U.in.data.gear_animation_pos_2 - FlyByWire_P.Constant_Value_g;
+  if (Theta > FlyByWire_P.Saturation2_UpperSat_b) {
+    Theta = FlyByWire_P.Saturation2_UpperSat_b;
   } else {
-    if (result_tmp < FlyByWire_P.Saturation2_LowerSat_g) {
-      result_tmp = FlyByWire_P.Saturation2_LowerSat_g;
+    if (Theta < FlyByWire_P.Saturation2_LowerSat_g) {
+      Theta = FlyByWire_P.Saturation2_LowerSat_g;
     }
   }
 
-  rtb_deltafalllimit = FlyByWire_U.in.input.delta_eta_pos - FlyByWire_DWork.PrevY;
-  if (rtb_deltafalllimit > FlyByWire_P.RateLimitereta_RisingLim) {
-    rtb_Integration_m = FlyByWire_DWork.PrevY + FlyByWire_P.RateLimitereta_RisingLim;
-  } else if (rtb_deltafalllimit < FlyByWire_P.RateLimitereta_FallingLim) {
-    rtb_Integration_m = FlyByWire_DWork.PrevY + FlyByWire_P.RateLimitereta_FallingLim;
-  } else {
-    rtb_Integration_m = FlyByWire_U.in.input.delta_eta_pos;
-  }
-
-  FlyByWire_DWork.PrevY = rtb_Integration_m;
-  rtb_Gaineta = FlyByWire_P.Gaineta_Gain * rtb_Integration_m;
-  rtb_deltafalllimit = FlyByWire_U.in.input.delta_xi_pos - FlyByWire_DWork.PrevY_c;
-  if (rtb_deltafalllimit > FlyByWire_P.RateLimiterxi_RisingLim) {
-    rtb_Integration_m = FlyByWire_DWork.PrevY_c + FlyByWire_P.RateLimiterxi_RisingLim;
-  } else if (rtb_deltafalllimit < FlyByWire_P.RateLimiterxi_FallingLim) {
-    rtb_Integration_m = FlyByWire_DWork.PrevY_c + FlyByWire_P.RateLimiterxi_FallingLim;
-  } else {
-    rtb_Integration_m = FlyByWire_U.in.input.delta_xi_pos;
-  }
-
-  FlyByWire_DWork.PrevY_c = rtb_Integration_m;
-  rtb_Gainxi = FlyByWire_P.Gainxi_Gain * rtb_Integration_m;
-  rtb_deltafalllimit = FlyByWire_U.in.input.delta_zeta_pos - FlyByWire_DWork.PrevY_f;
-  if (rtb_deltafalllimit > FlyByWire_P.RateLimiterxi1_RisingLim) {
-    rtb_Integration_m = FlyByWire_DWork.PrevY_f + FlyByWire_P.RateLimiterxi1_RisingLim;
-  } else if (rtb_deltafalllimit < FlyByWire_P.RateLimiterxi1_FallingLim) {
-    rtb_Integration_m = FlyByWire_DWork.PrevY_f + FlyByWire_P.RateLimiterxi1_FallingLim;
-  } else {
-    rtb_Integration_m = FlyByWire_U.in.input.delta_zeta_pos;
-  }
-
-  FlyByWire_DWork.PrevY_f = rtb_Integration_m;
-  rtb_Gainxi1 = FlyByWire_P.Gainxi1_Gain * rtb_Integration_m;
+  FlyByWire_DWork.Delay_DSTATE += FlyByWire_U.in.time.dt;
+  rtb_Limitereta = FlyByWire_P.Gaineta_Gain * FlyByWire_U.in.input.delta_eta_pos;
   if (FlyByWire_DWork.is_active_c1_FlyByWire == 0U) {
     FlyByWire_DWork.is_active_c1_FlyByWire = 1U;
     FlyByWire_DWork.is_c1_FlyByWire = FlyByWire_IN_OnGround;
     rtb_on_ground = 1;
   } else if (FlyByWire_DWork.is_c1_FlyByWire == FlyByWire_IN_InAir) {
-    if ((rtb_deltafalllimit_a > 0.1) || (result_tmp > 0.1)) {
+    if ((rtb_Sum5 > 0.1) || (Theta > 0.1)) {
       FlyByWire_DWork.is_c1_FlyByWire = FlyByWire_IN_OnGround;
       rtb_on_ground = 1;
     } else {
       rtb_on_ground = 0;
     }
   } else {
-    if ((rtb_deltafalllimit_a == 0.0) && (result_tmp == 0.0)) {
+    if ((rtb_Sum5 == 0.0) && (Theta == 0.0)) {
       FlyByWire_DWork.is_c1_FlyByWire = FlyByWire_IN_InAir;
       rtb_on_ground = 0;
     } else {
@@ -385,46 +348,55 @@ void FlyByWireModelClass::step()
     }
   }
 
-  FlyByWire_Y.out.sim.data.eta_trim_deg = rtb_Limiterxi;
-  BusAssignment_sim_data_zeta_trim_deg = FlyByWire_P.Gainpk3_Gain * FlyByWire_U.in.data.zeta_trim_pos;
-  FlyByWire_Y.out.sim.data.gear_strut_compression_1 = rtb_deltafalllimit_a;
-  FlyByWire_DWork.chartAbsoluteTimeCounter++;
-  rtb_eta_trim_deg_should_freeze = ((rtb_on_ground == 1) && (rtb_GainTheta < 2.5));
-  if ((!rtb_eta_trim_deg_should_freeze) || (!FlyByWire_DWork.condWasTrueAtLastTimeStep_1)) {
-    FlyByWire_DWork.durationLastReferenceTick_1 = FlyByWire_DWork.chartAbsoluteTimeCounter;
-  }
-
-  FlyByWire_DWork.condWasTrueAtLastTimeStep_1 = rtb_eta_trim_deg_should_freeze;
+  result_tmp = FlyByWire_P.Gainpk3_Gain * FlyByWire_U.in.data.zeta_trim_pos;
+  Phi = rtb_Limitereta;
+  rtb_BusAssignment_a_sim_input_delta_xi_pos = FlyByWire_P.Gainxi_Gain * FlyByWire_U.in.input.delta_xi_pos;
+  rtb_BusAssignment_a_sim_input_delta_zeta_pos = FlyByWire_P.Gainxi1_Gain * FlyByWire_U.in.input.delta_zeta_pos;
+  rtb_BusAssignment_c_pitch_data_computed_delta_eta_deg = FlyByWire_P.Gain_Gain_d * rtb_Limitereta;
   if (FlyByWire_DWork.is_active_c3_FlyByWire == 0U) {
-    FlyByWire_DWork.chartAbsoluteTimeCounter = 0;
     FlyByWire_DWork.is_active_c3_FlyByWire = 1U;
     FlyByWire_DWork.is_c3_FlyByWire = FlyByWire_IN_Ground_p;
-    rtb_in_flight_o = 0;
-  } else if (FlyByWire_DWork.is_c3_FlyByWire == FlyByWire_IN_Flight) {
-    rtb_eta_trim_deg_should_freeze = ((rtb_on_ground == 1) && (rtb_GainTheta < 2.5));
-    if ((!rtb_eta_trim_deg_should_freeze) || (!FlyByWire_DWork.condWasTrueAtLastTimeStep_1)) {
-      FlyByWire_DWork.durationLastReferenceTick_1 = FlyByWire_DWork.chartAbsoluteTimeCounter;
-    }
-
-    FlyByWire_DWork.condWasTrueAtLastTimeStep_1 = rtb_eta_trim_deg_should_freeze;
-    if (FlyByWire_DWork.chartAbsoluteTimeCounter - FlyByWire_DWork.durationLastReferenceTick_1 >= 250) {
-      FlyByWire_DWork.is_c3_FlyByWire = FlyByWire_IN_Ground_p;
-      rtb_in_flight_o = 0;
-    } else {
-      rtb_in_flight_o = 1;
-    }
+    FlyByWire_B.in_flight = 0.0;
   } else {
-    if (((rtb_on_ground == 0) && (rtb_GainTheta > 8.0)) || (FlyByWire_U.in.data.H_radio_ft > 400.0)) {
-      FlyByWire_DWork.durationLastReferenceTick_1 = FlyByWire_DWork.chartAbsoluteTimeCounter;
-      FlyByWire_DWork.is_c3_FlyByWire = FlyByWire_IN_Flight;
-      rtb_in_flight_o = 1;
-      FlyByWire_DWork.condWasTrueAtLastTimeStep_1 = ((rtb_on_ground == 1) && (rtb_GainTheta < 2.5));
-    } else {
-      rtb_in_flight_o = 0;
+    switch (FlyByWire_DWork.is_c3_FlyByWire) {
+     case FlyByWire_IN_Flight:
+      if ((rtb_on_ground == 1) && (rtb_GainTheta < 2.5)) {
+        FlyByWire_DWork.on_ground_time = FlyByWire_DWork.Delay_DSTATE;
+        FlyByWire_DWork.is_c3_FlyByWire = FlyByWire_IN_FlightToGroundTransition;
+      } else {
+        FlyByWire_B.in_flight = 1.0;
+      }
+      break;
+
+     case FlyByWire_IN_FlightToGroundTransition:
+      if (FlyByWire_DWork.Delay_DSTATE - FlyByWire_DWork.on_ground_time >= 5.0) {
+        FlyByWire_DWork.is_c3_FlyByWire = FlyByWire_IN_Ground_p;
+        FlyByWire_B.in_flight = 0.0;
+      } else {
+        if ((rtb_on_ground == 0) || (rtb_GainTheta >= 2.5)) {
+          FlyByWire_DWork.on_ground_time = 0.0;
+          FlyByWire_DWork.is_c3_FlyByWire = FlyByWire_IN_Flight;
+          FlyByWire_B.in_flight = 1.0;
+        }
+      }
+      break;
+
+     default:
+      if (((rtb_on_ground == 0) && (rtb_GainTheta > 8.0)) || (FlyByWire_U.in.data.H_radio_ft > 400.0)) {
+        FlyByWire_DWork.on_ground_time = 0.0;
+        FlyByWire_DWork.is_c3_FlyByWire = FlyByWire_IN_Flight;
+        FlyByWire_B.in_flight = 1.0;
+      } else {
+        FlyByWire_B.in_flight = 0.0;
+      }
+      break;
     }
   }
 
-  numAccum = FlyByWire_P.DiscreteTransferFcn_NumCoef * FlyByWire_DWork.DiscreteTransferFcn_states;
+  rtb_Limiterxi = FlyByWire_U.in.time.dt * FlyByWire_P.LagFilter_C1;
+  rtb_Limiterxi2 = rtb_Limiterxi + FlyByWire_P.Constant_Value_l;
+  FlyByWire_DWork.Delay1_DSTATE = 1.0 / rtb_Limiterxi2 * (FlyByWire_P.Constant_Value_l - rtb_Limiterxi) *
+    FlyByWire_DWork.Delay1_DSTATE + (rtb_GainTheta + FlyByWire_DWork.Delay_DSTATE_h) * (rtb_Limiterxi / rtb_Limiterxi2);
   if (FlyByWire_P.ManualSwitch_CurrentSetting == 1) {
     rtb_ManualSwitch = FlyByWire_P.Constant1_Value;
   } else {
@@ -435,20 +407,20 @@ void FlyByWireModelClass::step()
     FlyByWire_DWork.is_active_c2_FlyByWire = 1U;
     FlyByWire_DWork.is_c2_FlyByWire = FlyByWire_IN_Ground;
     rtb_in_flare = 0;
-    FlyByWire_B.flare_Theta_c_deg = numAccum;
+    FlyByWire_B.flare_Theta_c_deg = FlyByWire_DWork.Delay1_DSTATE;
     FlyByWire_B.flare_Theta_c_rate_deg_s = -3.0;
   } else {
     switch (FlyByWire_DWork.is_c2_FlyByWire) {
      case FlyByWire_IN_Flare_Reduce_Theta_c:
-      if (rtb_in_flight_o == 0) {
+      if (FlyByWire_B.in_flight == 0.0) {
         FlyByWire_DWork.is_c2_FlyByWire = FlyByWire_IN_Ground;
         rtb_in_flare = 0;
-        FlyByWire_B.flare_Theta_c_deg = numAccum;
+        FlyByWire_B.flare_Theta_c_deg = FlyByWire_DWork.Delay1_DSTATE;
         FlyByWire_B.flare_Theta_c_rate_deg_s = -3.0;
       } else if ((FlyByWire_U.in.data.H_radio_ft > 50.0) && (rtb_ManualSwitch == 0.0)) {
         FlyByWire_DWork.is_c2_FlyByWire = FlyByWire_IN_Flight_Low;
         rtb_in_flare = 0;
-        FlyByWire_B.flare_Theta_c_deg = numAccum;
+        FlyByWire_B.flare_Theta_c_deg = FlyByWire_DWork.Delay1_DSTATE;
         FlyByWire_B.flare_Theta_c_rate_deg_s = -3.0;
       } else {
         rtb_in_flare = 1;
@@ -458,19 +430,19 @@ void FlyByWireModelClass::step()
 
      case FlyByWire_IN_Flare_Set_Rate:
       if (FlyByWire_P.ManualSwitch1_CurrentSetting == 1) {
-        rtb_deltafalllimit = FlyByWire_P.Constant1_Value;
+        rtb_Limiterxi = FlyByWire_P.Constant1_Value;
       } else {
-        rtb_deltafalllimit = FlyByWire_P.Constant_Value_j;
+        rtb_Limiterxi = FlyByWire_P.Constant_Value_j;
       }
 
-      if ((FlyByWire_U.in.data.H_radio_ft <= 30.0) || (rtb_deltafalllimit == 1.0)) {
+      if ((FlyByWire_U.in.data.H_radio_ft <= 30.0) || (rtb_Limiterxi == 1.0)) {
         FlyByWire_DWork.is_c2_FlyByWire = FlyByWire_IN_Flare_Reduce_Theta_c;
         rtb_in_flare = 1;
         FlyByWire_B.flare_Theta_c_deg = -2.0;
       } else if ((FlyByWire_U.in.data.H_radio_ft > 50.0) && (rtb_ManualSwitch == 0.0)) {
         FlyByWire_DWork.is_c2_FlyByWire = FlyByWire_IN_Flight_Low;
         rtb_in_flare = 0;
-        FlyByWire_B.flare_Theta_c_deg = numAccum;
+        FlyByWire_B.flare_Theta_c_deg = FlyByWire_DWork.Delay1_DSTATE;
         FlyByWire_B.flare_Theta_c_rate_deg_s = -3.0;
       } else {
         rtb_in_flare = 1;
@@ -481,10 +453,10 @@ void FlyByWireModelClass::step()
       if ((FlyByWire_U.in.data.H_radio_ft > 50.0) && (rtb_ManualSwitch == 0.0)) {
         FlyByWire_DWork.is_c2_FlyByWire = FlyByWire_IN_Flight_Low;
         rtb_in_flare = 0;
-        FlyByWire_B.flare_Theta_c_deg = numAccum;
+        FlyByWire_B.flare_Theta_c_deg = FlyByWire_DWork.Delay1_DSTATE;
         FlyByWire_B.flare_Theta_c_rate_deg_s = -3.0;
       } else {
-        FlyByWire_B.flare_Theta_c_rate_deg_s = -(numAccum + 2.0) / 8.0;
+        FlyByWire_B.flare_Theta_c_rate_deg_s = -(FlyByWire_DWork.Delay1_DSTATE + 2.0) / 8.0;
         FlyByWire_DWork.is_c2_FlyByWire = FlyByWire_IN_Flare_Set_Rate;
         rtb_in_flare = 1;
       }
@@ -492,12 +464,12 @@ void FlyByWireModelClass::step()
 
      case FlyByWire_IN_Flight_High:
       if ((FlyByWire_U.in.data.H_radio_ft <= 50.0) || (rtb_ManualSwitch == 1.0)) {
-        FlyByWire_B.flare_Theta_c_deg = numAccum;
+        FlyByWire_B.flare_Theta_c_deg = FlyByWire_DWork.Delay1_DSTATE;
         FlyByWire_DWork.is_c2_FlyByWire = FlyByWire_IN_Flare_Store_Theta_c_deg;
         rtb_in_flare = 1;
       } else {
         rtb_in_flare = 0;
-        FlyByWire_B.flare_Theta_c_deg = numAccum;
+        FlyByWire_B.flare_Theta_c_deg = FlyByWire_DWork.Delay1_DSTATE;
         FlyByWire_B.flare_Theta_c_rate_deg_s = -3.0;
       }
       break;
@@ -506,48 +478,50 @@ void FlyByWireModelClass::step()
       if (FlyByWire_U.in.data.H_radio_ft > 50.0) {
         FlyByWire_DWork.is_c2_FlyByWire = FlyByWire_IN_Flight_High;
         rtb_in_flare = 0;
-        FlyByWire_B.flare_Theta_c_deg = numAccum;
+        FlyByWire_B.flare_Theta_c_deg = FlyByWire_DWork.Delay1_DSTATE;
         FlyByWire_B.flare_Theta_c_rate_deg_s = -3.0;
       } else {
         rtb_in_flare = 0;
-        FlyByWire_B.flare_Theta_c_deg = numAccum;
+        FlyByWire_B.flare_Theta_c_deg = FlyByWire_DWork.Delay1_DSTATE;
         FlyByWire_B.flare_Theta_c_rate_deg_s = -3.0;
       }
       break;
 
      default:
-      if (rtb_in_flight_o == 1) {
+      if (FlyByWire_B.in_flight == 1.0) {
         FlyByWire_DWork.is_c2_FlyByWire = FlyByWire_IN_Flight_Low;
         rtb_in_flare = 0;
-        FlyByWire_B.flare_Theta_c_deg = numAccum;
+        FlyByWire_B.flare_Theta_c_deg = FlyByWire_DWork.Delay1_DSTATE;
         FlyByWire_B.flare_Theta_c_rate_deg_s = -3.0;
       } else {
         rtb_in_flare = 0;
-        FlyByWire_B.flare_Theta_c_deg = numAccum;
+        FlyByWire_B.flare_Theta_c_deg = FlyByWire_DWork.Delay1_DSTATE;
         FlyByWire_B.flare_Theta_c_rate_deg_s = -3.0;
       }
       break;
     }
   }
 
-  if (rtb_in_flight_o > FlyByWire_P.Saturation_UpperSat_er) {
-    rtb_deltafalllimit_a = FlyByWire_P.Saturation_UpperSat_er;
-  } else if (rtb_in_flight_o < FlyByWire_P.Saturation_LowerSat_a) {
-    rtb_deltafalllimit_a = FlyByWire_P.Saturation_LowerSat_a;
+  if (FlyByWire_B.in_flight > FlyByWire_P.Saturation_UpperSat_er) {
+    rtb_Limiterxi = FlyByWire_P.Saturation_UpperSat_er;
+  } else if (FlyByWire_B.in_flight < FlyByWire_P.Saturation_LowerSat_a) {
+    rtb_Limiterxi = FlyByWire_P.Saturation_LowerSat_a;
   } else {
-    rtb_deltafalllimit_a = rtb_in_flight_o;
+    rtb_Limiterxi = FlyByWire_B.in_flight;
   }
 
-  rtb_deltafalllimit = rtb_deltafalllimit_a - FlyByWire_DWork.PrevY_h;
-  if (rtb_deltafalllimit > FlyByWire_P.RateLimit_RisingLim) {
-    rtb_deltafalllimit_a = FlyByWire_DWork.PrevY_h + FlyByWire_P.RateLimit_RisingLim;
-  } else {
-    if (rtb_deltafalllimit < FlyByWire_P.RateLimit_FallingLim) {
-      rtb_deltafalllimit_a = FlyByWire_DWork.PrevY_h + FlyByWire_P.RateLimit_FallingLim;
-    }
+  u0 = rtb_Limiterxi - FlyByWire_DWork.Delay_DSTATE_hc;
+  u1 = FlyByWire_P.RateLimiterVariableTs_up * FlyByWire_U.in.time.dt;
+  if (u0 < u1) {
+    u1 = u0;
   }
 
-  FlyByWire_DWork.PrevY_h = rtb_deltafalllimit_a;
+  rtb_Limiterxi2 = FlyByWire_U.in.time.dt * FlyByWire_P.RateLimiterVariableTs_lo;
+  if (u1 > rtb_Limiterxi2) {
+    rtb_Limiterxi2 = u1;
+  }
+
+  FlyByWire_DWork.Delay_DSTATE_hc += rtb_Limiterxi2;
   if (FlyByWire_DWork.is_active_c7_FlyByWire == 0U) {
     FlyByWire_DWork.is_active_c7_FlyByWire = 1U;
     FlyByWire_DWork.is_c7_FlyByWire = FlyByWire_IN_ground;
@@ -564,7 +538,7 @@ void FlyByWireModelClass::step()
         rtb_eta_trim_deg_rate_limit_lo_deg_s = -0.7;
         rtb_nz_limit_up_g = 2.0;
         rtb_nz_limit_lo_g = 0;
-      } else if ((rtb_in_flight_o == 0) && (FlyByWire_U.in.data.flaps_handle_index == 0.0)) {
+      } else if ((FlyByWire_B.in_flight == 0.0) && (FlyByWire_U.in.data.flaps_handle_index == 0.0)) {
         FlyByWire_DWork.is_c7_FlyByWire = FlyByWire_IN_ground;
         rtb_ManualSwitch = 0.7;
         rtb_eta_trim_deg_rate_limit_lo_deg_s = -0.7;
@@ -585,7 +559,7 @@ void FlyByWireModelClass::step()
         rtb_eta_trim_deg_rate_limit_lo_deg_s = -0.3;
         rtb_nz_limit_up_g = 2.5;
         rtb_nz_limit_lo_g = -1;
-      } else if (rtb_in_flight_o == 0) {
+      } else if (FlyByWire_B.in_flight == 0.0) {
         FlyByWire_DWork.is_c7_FlyByWire = FlyByWire_IN_ground;
         rtb_ManualSwitch = 0.7;
         rtb_eta_trim_deg_rate_limit_lo_deg_s = -0.7;
@@ -600,13 +574,13 @@ void FlyByWireModelClass::step()
       break;
 
      default:
-      if ((rtb_in_flight_o != 0) && (FlyByWire_U.in.data.flaps_handle_index == 0.0)) {
+      if ((FlyByWire_B.in_flight != 0.0) && (FlyByWire_U.in.data.flaps_handle_index == 0.0)) {
         FlyByWire_DWork.is_c7_FlyByWire = FlyByWire_IN_flight_clean;
         rtb_ManualSwitch = 0.3;
         rtb_eta_trim_deg_rate_limit_lo_deg_s = -0.3;
         rtb_nz_limit_up_g = 2.5;
         rtb_nz_limit_lo_g = -1;
-      } else if ((rtb_in_flight_o != 0) && (FlyByWire_U.in.data.flaps_handle_index != 0.0)) {
+      } else if ((FlyByWire_B.in_flight != 0.0) && (FlyByWire_U.in.data.flaps_handle_index != 0.0)) {
         FlyByWire_DWork.is_c7_FlyByWire = FlyByWire_IN_flight_flaps;
         rtb_ManualSwitch = 0.7;
         rtb_eta_trim_deg_rate_limit_lo_deg_s = -0.7;
@@ -648,41 +622,41 @@ void FlyByWireModelClass::step()
     FlyByWire_DWork.is_active_c8_FlyByWire = 1U;
     FlyByWire_DWork.is_c8_FlyByWire = FlyByWire_IN_manual;
     rtb_eta_trim_deg_reset = true;
-    rtb_eta_trim_deg_reset_deg = rtb_Limiterxi;
+    rtb_eta_trim_deg_reset_deg = rtb_Minup;
     rtb_eta_trim_deg_should_write = false;
   } else {
     switch (FlyByWire_DWork.is_c8_FlyByWire) {
      case FlyByWire_IN_automatic:
-      if (rtb_in_flight_o == 0) {
+      if (FlyByWire_B.in_flight == 0.0) {
         FlyByWire_DWork.is_c8_FlyByWire = FlyByWire_IN_reset;
         rtb_eta_trim_deg_reset = true;
         rtb_eta_trim_deg_reset_deg = 0.0;
         rtb_eta_trim_deg_should_write = true;
       } else {
         rtb_eta_trim_deg_reset = false;
-        rtb_eta_trim_deg_reset_deg = rtb_Limiterxi;
+        rtb_eta_trim_deg_reset_deg = rtb_Minup;
         rtb_eta_trim_deg_should_write = true;
       }
       break;
 
      case FlyByWire_IN_manual:
-      if (rtb_in_flight_o != 0) {
+      if (FlyByWire_B.in_flight != 0.0) {
         FlyByWire_DWork.is_c8_FlyByWire = FlyByWire_IN_automatic;
         rtb_eta_trim_deg_reset = false;
-        rtb_eta_trim_deg_reset_deg = rtb_Limiterxi;
+        rtb_eta_trim_deg_reset_deg = rtb_Minup;
         rtb_eta_trim_deg_should_write = true;
       } else {
         rtb_eta_trim_deg_reset = true;
-        rtb_eta_trim_deg_reset_deg = rtb_Limiterxi;
+        rtb_eta_trim_deg_reset_deg = rtb_Minup;
         rtb_eta_trim_deg_should_write = false;
       }
       break;
 
      default:
-      if ((rtb_in_flight_o == 0) && (rtb_Limiterxi == 0.0)) {
+      if ((FlyByWire_B.in_flight == 0.0) && (rtb_Minup == 0.0)) {
         FlyByWire_DWork.is_c8_FlyByWire = FlyByWire_IN_manual;
         rtb_eta_trim_deg_reset = true;
-        rtb_eta_trim_deg_reset_deg = rtb_Limiterxi;
+        rtb_eta_trim_deg_reset_deg = rtb_Minup;
         rtb_eta_trim_deg_should_write = false;
       } else {
         rtb_eta_trim_deg_reset = true;
@@ -693,65 +667,69 @@ void FlyByWireModelClass::step()
     }
   }
 
-  rtb_deltafalllimit = std::abs(FlyByWire_B.flare_Theta_c_rate_deg_s) * FlyByWire_P.sampletime_WtEt;
-  rtb_Integration_m = FlyByWire_B.flare_Theta_c_deg - FlyByWire_DWork.DelayInput2_DSTATE;
-  if (rtb_Integration_m <= rtb_deltafalllimit) {
-    rtb_deltafalllimit = FlyByWire_B.flare_Theta_c_rate_deg_s * FlyByWire_P.sampletime_WtEt;
-    if (rtb_Integration_m >= rtb_deltafalllimit) {
-      rtb_deltafalllimit = rtb_Integration_m;
-    }
+  u0 = FlyByWire_B.flare_Theta_c_deg - FlyByWire_DWork.Delay_DSTATE_f;
+  u1 = std::abs(FlyByWire_B.flare_Theta_c_rate_deg_s) * FlyByWire_U.in.time.dt;
+  if (u0 < u1) {
+    u1 = u0;
   }
 
-  FlyByWire_DWork.DelayInput2_DSTATE += rtb_deltafalllimit;
-  rtb_BusAssignment_c_pitch_data_computed_delta_eta_deg = FlyByWire_P.Gain_Gain_d * rtb_Gaineta;
-  rtb_BusAssignment_c_pitch_data_computed_in_flight_gain = rtb_deltafalllimit_a;
-  rtb_Integration_m = FlyByWire_P.K7857_Gain * result_0[1] + FlyByWire_P.K7958_Gain * result[1];
-  rtb_deltafalllimit_a = look1_binlxpw(FlyByWire_U.in.data.V_tas_kn, FlyByWire_P.F193LUT_bp01Data,
-    FlyByWire_P.F193LUT_tableData, 7U);
-  FlyByWire_Y.out.pitch.law_protection.attitude_min.eta_dot_deg_s = ((FlyByWire_P.u1_Value + rtb_GainTheta) *
-    FlyByWire_P.K7659_Gain + rtb_Integration_m) * rtb_deltafalllimit_a;
-  FlyByWire_Y.out.pitch.law_protection.attitude_max.eta_dot_deg_s = ((rtb_GainTheta - FlyByWire_P.u7_Value) *
-    FlyByWire_P.K7765_Gain + rtb_Integration_m) * rtb_deltafalllimit_a;
-  rtb_Integration_m = FlyByWire_P.Gain1_Gain_j * result[1] * look1_binlxpw(FlyByWire_U.in.data.V_tas_kn,
+  rtb_Limiterxi2 = FlyByWire_U.in.time.dt * FlyByWire_B.flare_Theta_c_rate_deg_s;
+  if (u1 > rtb_Limiterxi2) {
+    rtb_Limiterxi2 = u1;
+  }
+
+  FlyByWire_DWork.Delay_DSTATE_f += rtb_Limiterxi2;
+  rtb_Limitereta = FlyByWire_P.Gain1_Gain_j * result[1] * look1_binlxpw(FlyByWire_U.in.data.V_tas_kn,
     FlyByWire_P.uDLookupTable_bp01Data, FlyByWire_P.uDLookupTable_tableData, 4U) + FlyByWire_U.in.data.nz_g;
   rtb_Gain1_b = FlyByWire_P.Gain1_Gain_d * rtb_GainTheta;
-  rtb_deltafalllimit_a = FlyByWire_P.Gain2_Gain_g * FlyByWire_P.Theta_max1_Value - rtb_Gain1_b;
-  if (rtb_deltafalllimit_a > FlyByWire_P.Saturation1_UpperSat_h) {
-    rtb_deltafalllimit_a = FlyByWire_P.Saturation1_UpperSat_h;
+  rtb_Sum5 = FlyByWire_P.Gain2_Gain_g * FlyByWire_P.Theta_max1_Value - rtb_Gain1_b;
+  if (rtb_Sum5 > FlyByWire_P.Saturation1_UpperSat_h) {
+    rtb_Sum5 = FlyByWire_P.Saturation1_UpperSat_h;
   } else {
-    if (rtb_deltafalllimit_a < FlyByWire_P.Saturation1_LowerSat_o) {
-      rtb_deltafalllimit_a = FlyByWire_P.Saturation1_LowerSat_o;
+    if (rtb_Sum5 < FlyByWire_P.Saturation1_LowerSat_o) {
+      rtb_Sum5 = FlyByWire_P.Saturation1_LowerSat_o;
     }
   }
 
-  if (rtb_Gaineta <= rtb_deltafalllimit_a) {
-    rtb_deltafalllimit_a = FlyByWire_P.Gain3_Gain * FlyByWire_P.Theta_max3_Value - rtb_Gain1_b;
-    if (rtb_deltafalllimit_a > FlyByWire_P.Saturation2_UpperSat) {
-      rtb_deltafalllimit_a = FlyByWire_P.Saturation2_UpperSat;
+  u0 = Phi - FlyByWire_DWork.Delay_DSTATE_c;
+  u1 = FlyByWire_P.RateLimiterVariableTs_up_f * FlyByWire_U.in.time.dt;
+  if (u0 < u1) {
+    u1 = u0;
+  }
+
+  rtb_Limiterxi2 = FlyByWire_U.in.time.dt * FlyByWire_P.RateLimiterVariableTs_lo_f;
+  if (u1 > rtb_Limiterxi2) {
+    rtb_Limiterxi2 = u1;
+  }
+
+  FlyByWire_DWork.Delay_DSTATE_c += rtb_Limiterxi2;
+  if (FlyByWire_DWork.Delay_DSTATE_c <= rtb_Sum5) {
+    rtb_Sum5 = FlyByWire_P.Gain3_Gain * FlyByWire_P.Theta_max3_Value - rtb_Gain1_b;
+    if (rtb_Sum5 > FlyByWire_P.Saturation2_UpperSat) {
+      rtb_Sum5 = FlyByWire_P.Saturation2_UpperSat;
     } else {
-      if (rtb_deltafalllimit_a < FlyByWire_P.Saturation2_LowerSat) {
-        rtb_deltafalllimit_a = FlyByWire_P.Saturation2_LowerSat;
+      if (rtb_Sum5 < FlyByWire_P.Saturation2_LowerSat) {
+        rtb_Sum5 = FlyByWire_P.Saturation2_LowerSat;
       }
     }
 
-    if (rtb_Gaineta >= rtb_deltafalllimit_a) {
-      rtb_deltafalllimit_a = rtb_Gaineta;
+    if (FlyByWire_DWork.Delay_DSTATE_c >= rtb_Sum5) {
+      rtb_Sum5 = FlyByWire_DWork.Delay_DSTATE_c;
     }
   }
 
-  rtb_deltafalllimit_a = look1_binlxpw(rtb_deltafalllimit_a, FlyByWire_P.Loaddemand_bp01Data,
-    FlyByWire_P.Loaddemand_tableData, 2U);
+  rtb_Sum5 = look1_binlxpw(rtb_Sum5, FlyByWire_P.Loaddemand_bp01Data, FlyByWire_P.Loaddemand_tableData, 2U);
   if (rtb_in_flare > FlyByWire_P.Switch_Threshold) {
-    rtb_deltafalllimit = (FlyByWire_DWork.DelayInput2_DSTATE - rtb_GainTheta) * FlyByWire_P.Gain_Gain;
-    if (rtb_deltafalllimit > FlyByWire_P.Saturation_UpperSat) {
-      rtb_deltafalllimit = FlyByWire_P.Saturation_UpperSat;
+    rtb_Limiterxi = (FlyByWire_DWork.Delay_DSTATE_f - rtb_GainTheta) * FlyByWire_P.Gain_Gain;
+    if (rtb_Limiterxi > FlyByWire_P.Saturation_UpperSat) {
+      rtb_Limiterxi = FlyByWire_P.Saturation_UpperSat;
     } else {
-      if (rtb_deltafalllimit < FlyByWire_P.Saturation_LowerSat) {
-        rtb_deltafalllimit = FlyByWire_P.Saturation_LowerSat;
+      if (rtb_Limiterxi < FlyByWire_P.Saturation_LowerSat) {
+        rtb_Limiterxi = FlyByWire_P.Saturation_LowerSat;
       }
     }
   } else {
-    rtb_deltafalllimit = FlyByWire_P.Constant_Value_m;
+    rtb_Limiterxi = FlyByWire_P.Constant_Value_m;
   }
 
   if (rtb_GainPhi > FlyByWire_P.Saturation_UpperSat_d) {
@@ -762,117 +740,103 @@ void FlyByWireModelClass::step()
     rtb_Gain1_b = rtb_GainPhi;
   }
 
-  rtb_deltafalllimit_a = (std::cos(FlyByWire_P.Gain1_Gain_p * rtb_GainTheta) / std::cos(FlyByWire_P.Gain1_Gain_b *
-    rtb_Gain1_b) + rtb_deltafalllimit_a) + rtb_deltafalllimit;
-  if (rtb_deltafalllimit_a > rtb_nz_limit_up_g) {
-    rtb_deltafalllimit_a = rtb_nz_limit_up_g;
+  rtb_Sum5 = (std::cos(FlyByWire_P.Gain1_Gain_p * rtb_GainTheta) / std::cos(FlyByWire_P.Gain1_Gain_b * rtb_Gain1_b) +
+              rtb_Sum5) + rtb_Limiterxi;
+  if (rtb_Sum5 > rtb_nz_limit_up_g) {
+    rtb_Sum5 = rtb_nz_limit_up_g;
   } else {
-    if (rtb_deltafalllimit_a < rtb_nz_limit_lo_g) {
-      rtb_deltafalllimit_a = rtb_nz_limit_lo_g;
+    if (rtb_Sum5 < rtb_nz_limit_lo_g) {
+      rtb_Sum5 = rtb_nz_limit_lo_g;
     }
   }
 
-  rtb_deltafalllimit = rtb_Integration_m - rtb_deltafalllimit_a;
-  rtb_PProdOut = rtb_deltafalllimit * look1_binlxpw(FlyByWire_U.in.data.V_tas_kn, FlyByWire_P.PLUT_bp01Data,
-    FlyByWire_P.PLUT_tableData, 1U);
-  rtb_deltafalllimit *= look1_binlxpw(FlyByWire_U.in.data.V_tas_kn, FlyByWire_P.DLUT_bp01Data,
-    FlyByWire_P.DLUT_tableData, 1U);
-  rtb_Gain1_b = rtb_deltafalllimit * FlyByWire_P.TSamp_WtEt;
-  rtb_deltafalllimit = (rtb_Gain1_b - FlyByWire_DWork.UD_DSTATE) + rtb_PProdOut;
-  if (rtb_deltafalllimit > FlyByWire_P.PID_UpperSaturationLimit) {
-    rtb_deltafalllimit = FlyByWire_P.PID_UpperSaturationLimit;
+  rtb_Limiterxi = rtb_Limitereta - rtb_Sum5;
+  rtb_Gain1_b = rtb_Limiterxi * look1_binlxpw(FlyByWire_U.in.data.V_tas_kn, FlyByWire_P.DLUT_bp01Data,
+    FlyByWire_P.DLUT_tableData, 1U) * FlyByWire_P.DiscreteDerivativeVariableTs_Gain;
+  rtb_Limiterxi = (rtb_Gain1_b - FlyByWire_DWork.Delay_DSTATE_cf) / FlyByWire_U.in.time.dt + rtb_Limiterxi *
+    look1_binlxpw(FlyByWire_U.in.data.V_tas_kn, FlyByWire_P.PLUT_bp01Data, FlyByWire_P.PLUT_tableData, 1U);
+  if (rtb_Limiterxi > FlyByWire_P.Saturation_UpperSat_j) {
+    rtb_Limiterxi = FlyByWire_P.Saturation_UpperSat_j;
   } else {
-    if (rtb_deltafalllimit < FlyByWire_P.PID_LowerSaturationLimit) {
-      rtb_deltafalllimit = FlyByWire_P.PID_LowerSaturationLimit;
+    if (rtb_Limiterxi < FlyByWire_P.Saturation_LowerSat_c) {
+      rtb_Limiterxi = FlyByWire_P.Saturation_LowerSat_c;
     }
   }
 
-  rtb_PProdOut = rtb_deltafalllimit;
-  if (FlyByWire_DWork.Integration_IC_LOADING != 0) {
-    FlyByWire_DWork.Integration_DSTATE = rtb_BusAssignment_c_pitch_data_computed_delta_eta_deg;
-    if (FlyByWire_DWork.Integration_DSTATE >= FlyByWire_P.Integration_UpperSat) {
-      FlyByWire_DWork.Integration_DSTATE = FlyByWire_P.Integration_UpperSat;
-    } else {
-      if (FlyByWire_DWork.Integration_DSTATE <= FlyByWire_P.Integration_LowerSat) {
-        FlyByWire_DWork.Integration_DSTATE = FlyByWire_P.Integration_LowerSat;
-      }
-    }
+  FlyByWire_Y.out.pitch.law_normal.Cstar_g = rtb_Limitereta;
+  rtb_Limitereta = FlyByWire_P.DiscreteTimeIntegratorVariableTs_Gain * rtb_Limiterxi * FlyByWire_U.in.time.dt;
+  if (rt_ZCFcn(RISING_ZERO_CROSSING,&FlyByWire_PrevZCSigState.Delay_Reset_ZCE,
+               (FlyByWire_B.in_flight)) != NO_ZCEVENT) {
+    FlyByWire_DWork.icLoad = 1U;
   }
 
-  if ((rtb_in_flight_o > 0) && (FlyByWire_DWork.Integration_PrevResetState <= 0)) {
-    FlyByWire_DWork.Integration_DSTATE = rtb_BusAssignment_c_pitch_data_computed_delta_eta_deg;
-    if (FlyByWire_DWork.Integration_DSTATE >= FlyByWire_P.Integration_UpperSat) {
-      FlyByWire_DWork.Integration_DSTATE = FlyByWire_P.Integration_UpperSat;
-    } else {
-      if (FlyByWire_DWork.Integration_DSTATE <= FlyByWire_P.Integration_LowerSat) {
-        FlyByWire_DWork.Integration_DSTATE = FlyByWire_P.Integration_LowerSat;
-      }
-    }
+  if (FlyByWire_DWork.icLoad != 0) {
+    FlyByWire_DWork.Delay_DSTATE_f1 = rtb_BusAssignment_c_pitch_data_computed_delta_eta_deg - rtb_Limitereta;
   }
 
-  if (FlyByWire_DWork.Integration_DSTATE >= FlyByWire_P.Integration_UpperSat) {
-    FlyByWire_DWork.Integration_DSTATE = FlyByWire_P.Integration_UpperSat;
+  rtb_Limitereta += FlyByWire_DWork.Delay_DSTATE_f1;
+  if (rtb_Limitereta > FlyByWire_P.DiscreteTimeIntegratorVariableTs_UpperLimit) {
+    FlyByWire_DWork.Delay_DSTATE_f1 = FlyByWire_P.DiscreteTimeIntegratorVariableTs_UpperLimit;
+  } else if (rtb_Limitereta < FlyByWire_P.DiscreteTimeIntegratorVariableTs_LowerLimit) {
+    FlyByWire_DWork.Delay_DSTATE_f1 = FlyByWire_P.DiscreteTimeIntegratorVariableTs_LowerLimit;
   } else {
-    if (FlyByWire_DWork.Integration_DSTATE <= FlyByWire_P.Integration_LowerSat) {
-      FlyByWire_DWork.Integration_DSTATE = FlyByWire_P.Integration_LowerSat;
-    }
+    FlyByWire_DWork.Delay_DSTATE_f1 = rtb_Limitereta;
   }
 
-  FlyByWire_Y.out.pitch.law_normal.Cstar_c_g = rtb_deltafalllimit_a;
-  FlyByWire_Y.out.pitch.law_normal.eta_dot_deg_s = rtb_deltafalllimit;
-  FlyByWire_Y.out.pitch.vote.eta_dot_deg_s = rtb_deltafalllimit;
-  if (rtb_BusAssignment_c_pitch_data_computed_in_flight_gain > FlyByWire_P.Saturation_UpperSat_j) {
-    rtb_deltafalllimit_a = FlyByWire_P.Saturation_UpperSat_j;
-  } else if (rtb_BusAssignment_c_pitch_data_computed_in_flight_gain < FlyByWire_P.Saturation_LowerSat_c) {
-    rtb_deltafalllimit_a = FlyByWire_P.Saturation_LowerSat_c;
+  FlyByWire_Y.out.pitch.law_normal.nz_c_g = rtb_Sum5;
+  if (FlyByWire_DWork.Delay_DSTATE_hc > FlyByWire_P.Saturation_UpperSat_o) {
+    rtb_Limitereta = FlyByWire_P.Saturation_UpperSat_o;
+  } else if (FlyByWire_DWork.Delay_DSTATE_hc < FlyByWire_P.Saturation_LowerSat_el) {
+    rtb_Limitereta = FlyByWire_P.Saturation_LowerSat_el;
   } else {
-    rtb_deltafalllimit_a = rtb_BusAssignment_c_pitch_data_computed_in_flight_gain;
+    rtb_Limitereta = FlyByWire_DWork.Delay_DSTATE_hc;
   }
 
-  rtb_deltafalllimit = FlyByWire_DWork.Integration_DSTATE * rtb_deltafalllimit_a;
-  rtb_deltafalllimit_a = FlyByWire_P.Constant_Value_o - rtb_deltafalllimit_a;
-  rtb_deltafalllimit_a *= rtb_BusAssignment_c_pitch_data_computed_delta_eta_deg;
-  rtb_BusAssignment_mv_pitch_output_eta_deg = rtb_deltafalllimit + rtb_deltafalllimit_a;
-  if (FlyByWire_DWork.Integration_IC_LOADING_a != 0) {
-    FlyByWire_DWork.Integration_DSTATE_e = rtb_eta_trim_deg_reset_deg;
-    if (FlyByWire_DWork.Integration_DSTATE_e >= FlyByWire_P.Integration_UpperSat_f) {
-      FlyByWire_DWork.Integration_DSTATE_e = FlyByWire_P.Integration_UpperSat_f;
-    } else {
-      if (FlyByWire_DWork.Integration_DSTATE_e <= FlyByWire_P.Integration_LowerSat_f) {
-        FlyByWire_DWork.Integration_DSTATE_e = FlyByWire_P.Integration_LowerSat_f;
-      }
-    }
-  }
-
-  if (rtb_eta_trim_deg_reset || (FlyByWire_DWork.Integration_PrevResetState_p != 0)) {
-    FlyByWire_DWork.Integration_DSTATE_e = rtb_eta_trim_deg_reset_deg;
-    if (FlyByWire_DWork.Integration_DSTATE_e >= FlyByWire_P.Integration_UpperSat_f) {
-      FlyByWire_DWork.Integration_DSTATE_e = FlyByWire_P.Integration_UpperSat_f;
-    } else {
-      if (FlyByWire_DWork.Integration_DSTATE_e <= FlyByWire_P.Integration_LowerSat_f) {
-        FlyByWire_DWork.Integration_DSTATE_e = FlyByWire_P.Integration_LowerSat_f;
-      }
-    }
-  }
-
-  if (FlyByWire_DWork.Integration_DSTATE_e >= FlyByWire_P.Integration_UpperSat_f) {
-    FlyByWire_DWork.Integration_DSTATE_e = FlyByWire_P.Integration_UpperSat_f;
+  rtb_Sum5 = FlyByWire_DWork.Delay_DSTATE_f1 * rtb_Limitereta;
+  rtb_Limitereta = FlyByWire_P.Constant_Value_c - rtb_Limitereta;
+  rtb_Limitereta *= rtb_BusAssignment_c_pitch_data_computed_delta_eta_deg;
+  rtb_BusAssignment_m_pitch_output_eta_deg = rtb_Sum5 + rtb_Limitereta;
+  if (rtb_eta_trim_deg_should_freeze) {
+    rtb_Limitereta = FlyByWire_P.Constant_Value;
   } else {
-    if (FlyByWire_DWork.Integration_DSTATE_e <= FlyByWire_P.Integration_LowerSat_f) {
-      FlyByWire_DWork.Integration_DSTATE_e = FlyByWire_P.Integration_LowerSat_f;
-    }
+    rtb_Limitereta = FlyByWire_DWork.Delay_DSTATE_f1;
   }
 
-  rtb_Limiterxi = FlyByWire_DWork.Integration_DSTATE_e - FlyByWire_DWork.DelayInput2_DSTATE_h;
-  rtb_deltafalllimit_a = rtb_ManualSwitch * FlyByWire_P.sampletime_WtEt_f;
-  if (rtb_Limiterxi <= rtb_deltafalllimit_a) {
-    rtb_deltafalllimit_a = rtb_eta_trim_deg_rate_limit_lo_deg_s * FlyByWire_P.sampletime_WtEt_f;
-    if (rtb_Limiterxi >= rtb_deltafalllimit_a) {
-      rtb_deltafalllimit_a = rtb_Limiterxi;
-    }
+  rtb_Sum5 = FlyByWire_P.Gain_Gain_ip * rtb_Limitereta * FlyByWire_P.DiscreteTimeIntegratorVariableTs_Gain_g *
+    FlyByWire_U.in.time.dt;
+  if ((((FlyByWire_PrevZCSigState.Delay_Reset_ZCE_f == POS_ZCSIG) != static_cast<int32_T>(rtb_eta_trim_deg_reset)) &&
+       (FlyByWire_PrevZCSigState.Delay_Reset_ZCE_f != UNINITIALIZED_ZCSIG)) || rtb_eta_trim_deg_reset) {
+    FlyByWire_DWork.icLoad_b = 1U;
   }
 
-  FlyByWire_DWork.DelayInput2_DSTATE_h += rtb_deltafalllimit_a;
+  FlyByWire_PrevZCSigState.Delay_Reset_ZCE_f = rtb_eta_trim_deg_reset;
+  if (FlyByWire_DWork.icLoad_b != 0) {
+    FlyByWire_DWork.Delay_DSTATE_m = rtb_eta_trim_deg_reset_deg - rtb_Sum5;
+  }
+
+  rtb_Sum5 += FlyByWire_DWork.Delay_DSTATE_m;
+  if (rtb_Sum5 > FlyByWire_P.DiscreteTimeIntegratorVariableTs_UpperLimit_j) {
+    FlyByWire_DWork.Delay_DSTATE_m = FlyByWire_P.DiscreteTimeIntegratorVariableTs_UpperLimit_j;
+  } else if (rtb_Sum5 < FlyByWire_P.DiscreteTimeIntegratorVariableTs_LowerLimit_g) {
+    FlyByWire_DWork.Delay_DSTATE_m = FlyByWire_P.DiscreteTimeIntegratorVariableTs_LowerLimit_g;
+  } else {
+    FlyByWire_DWork.Delay_DSTATE_m = rtb_Sum5;
+  }
+
+  u0 = FlyByWire_DWork.Delay_DSTATE_m - FlyByWire_DWork.Delay_DSTATE_b;
+  u1 = rtb_ManualSwitch * FlyByWire_U.in.time.dt;
+  if (u0 < u1) {
+    u1 = u0;
+  }
+
+  rtb_Limiterxi2 = FlyByWire_U.in.time.dt * rtb_eta_trim_deg_rate_limit_lo_deg_s;
+  if (u1 > rtb_Limiterxi2) {
+    rtb_Limiterxi2 = u1;
+  }
+
+  FlyByWire_DWork.Delay_DSTATE_b += rtb_Limiterxi2;
+  FlyByWire_Y.out.pitch.law_normal.eta_dot_deg_s = rtb_Limiterxi;
+  FlyByWire_Y.out.pitch.vote.eta_dot_deg_s = rtb_Limiterxi;
   if (FlyByWire_DWork.is_active_c5_FlyByWire == 0U) {
     FlyByWire_DWork.is_active_c5_FlyByWire = 1U;
     FlyByWire_DWork.is_c5_FlyByWire = FlyByWire_IN_GroundMode;
@@ -894,216 +858,220 @@ void FlyByWireModelClass::step()
   }
 
   if (rtb_in_flight > FlyByWire_P.Saturation_UpperSat_p) {
-    rtb_LimiteriH = FlyByWire_P.Saturation_UpperSat_p;
+    rtb_Limitereta = FlyByWire_P.Saturation_UpperSat_p;
   } else if (rtb_in_flight < FlyByWire_P.Saturation_LowerSat_h) {
-    rtb_LimiteriH = FlyByWire_P.Saturation_LowerSat_h;
+    rtb_Limitereta = FlyByWire_P.Saturation_LowerSat_h;
   } else {
-    rtb_LimiteriH = rtb_in_flight;
+    rtb_Limitereta = rtb_in_flight;
   }
 
-  rtb_deltafalllimit = rtb_LimiteriH - FlyByWire_DWork.PrevY_j;
-  if (rtb_deltafalllimit > FlyByWire_P.RateLimit_RisingLim_b) {
-    rtb_LimiteriH = FlyByWire_DWork.PrevY_j + FlyByWire_P.RateLimit_RisingLim_b;
-  } else {
-    if (rtb_deltafalllimit < FlyByWire_P.RateLimit_FallingLim_m) {
-      rtb_LimiteriH = FlyByWire_DWork.PrevY_j + FlyByWire_P.RateLimit_FallingLim_m;
-    }
+  u0 = rtb_Limitereta - FlyByWire_DWork.Delay_DSTATE_l;
+  u1 = FlyByWire_P.RateLimiterVariableTs_up_k * FlyByWire_U.in.time.dt;
+  if (u0 < u1) {
+    u1 = u0;
   }
 
-  FlyByWire_DWork.PrevY_j = rtb_LimiteriH;
-  BusAssignment_p_roll_data_computed_delta_xi_deg = FlyByWire_P.Gain_Gain_c * rtb_Gainxi;
-  BusAssignment_p_roll_data_computed_delta_zeta_deg = FlyByWire_P.Gain1_Gain_jh * rtb_Gainxi1;
-  BusAssignment_p_roll_data_computed_in_flight_gain = rtb_LimiteriH;
-  rtb_deltafalllimit = FlyByWire_P.Gain1_Gain_m * rtb_Gainxi + look1_binlxpw(rtb_GainPhi,
+  rtb_Limiterxi2 = FlyByWire_U.in.time.dt * FlyByWire_P.RateLimiterVariableTs_lo_fs;
+  if (u1 > rtb_Limiterxi2) {
+    rtb_Limiterxi2 = u1;
+  }
+
+  FlyByWire_DWork.Delay_DSTATE_l += rtb_Limiterxi2;
+  BusAssignment_roll_data_computed_delta_xi_deg = FlyByWire_P.Gain_Gain_c * rtb_BusAssignment_a_sim_input_delta_xi_pos;
+  BusAssignment_roll_data_computed_delta_zeta_deg = FlyByWire_P.Gain1_Gain_jh *
+    rtb_BusAssignment_a_sim_input_delta_zeta_pos;
+  u0 = FlyByWire_P.Gain1_Gain_m * rtb_BusAssignment_a_sim_input_delta_xi_pos + look1_binlxpw(rtb_GainPhi,
     FlyByWire_P.BankAngleProtection_bp01Data, FlyByWire_P.BankAngleProtection_tableData, 6U);
-  if (rtb_deltafalllimit > FlyByWire_P.Saturation_UpperSat_n) {
-    rtb_deltafalllimit = FlyByWire_P.Saturation_UpperSat_n;
+  if (u0 > FlyByWire_P.Saturation_UpperSat_n) {
+    u0 = FlyByWire_P.Saturation_UpperSat_n;
   } else {
-    if (rtb_deltafalllimit < FlyByWire_P.Saturation_LowerSat_o) {
-      rtb_deltafalllimit = FlyByWire_P.Saturation_LowerSat_o;
+    if (u0 < FlyByWire_P.Saturation_LowerSat_o) {
+      u0 = FlyByWire_P.Saturation_LowerSat_o;
     }
   }
 
-  rtb_deltafalllimit_a = rtb_deltafalllimit * rtb_LimiteriH;
-  if (FlyByWire_DWork.DiscreteTimeIntegrator_IC_LOADING != 0) {
-    FlyByWire_DWork.DiscreteTimeIntegrator_DSTATE = rtb_GainPhi;
-    if (FlyByWire_DWork.DiscreteTimeIntegrator_DSTATE >= FlyByWire_P.DiscreteTimeIntegrator_UpperSat) {
-      FlyByWire_DWork.DiscreteTimeIntegrator_DSTATE = FlyByWire_P.DiscreteTimeIntegrator_UpperSat;
-    } else {
-      if (FlyByWire_DWork.DiscreteTimeIntegrator_DSTATE <= FlyByWire_P.DiscreteTimeIntegrator_LowerSat) {
-        FlyByWire_DWork.DiscreteTimeIntegrator_DSTATE = FlyByWire_P.DiscreteTimeIntegrator_LowerSat;
-      }
-    }
+  rtb_Limitereta = u0 * FlyByWire_DWork.Delay_DSTATE_l;
+  rtb_Sum5 = FlyByWire_P.DiscreteTimeIntegratorVariableTs_Gain_d * rtb_Limitereta * FlyByWire_U.in.time.dt;
+  if (rt_ZCFcn(RISING_ZERO_CROSSING,&FlyByWire_PrevZCSigState.Delay_Reset_ZCE_a,
+               (FlyByWire_DWork.Delay_DSTATE_l)) != NO_ZCEVENT) {
+    FlyByWire_DWork.icLoad_m = 1U;
   }
 
-  if ((rtb_LimiteriH > 0.0) && (FlyByWire_DWork.DiscreteTimeIntegrator_PrevResetState <= 0)) {
-    FlyByWire_DWork.DiscreteTimeIntegrator_DSTATE = rtb_GainPhi;
-    if (FlyByWire_DWork.DiscreteTimeIntegrator_DSTATE >= FlyByWire_P.DiscreteTimeIntegrator_UpperSat) {
-      FlyByWire_DWork.DiscreteTimeIntegrator_DSTATE = FlyByWire_P.DiscreteTimeIntegrator_UpperSat;
-    } else {
-      if (FlyByWire_DWork.DiscreteTimeIntegrator_DSTATE <= FlyByWire_P.DiscreteTimeIntegrator_LowerSat) {
-        FlyByWire_DWork.DiscreteTimeIntegrator_DSTATE = FlyByWire_P.DiscreteTimeIntegrator_LowerSat;
-      }
-    }
+  if (FlyByWire_DWork.icLoad_m != 0) {
+    FlyByWire_DWork.Delay_DSTATE_ho = rtb_GainPhi - rtb_Sum5;
   }
 
-  if (FlyByWire_DWork.DiscreteTimeIntegrator_DSTATE >= FlyByWire_P.DiscreteTimeIntegrator_UpperSat) {
-    FlyByWire_DWork.DiscreteTimeIntegrator_DSTATE = FlyByWire_P.DiscreteTimeIntegrator_UpperSat;
+  rtb_Sum5 += FlyByWire_DWork.Delay_DSTATE_ho;
+  if (rtb_Sum5 > FlyByWire_P.DiscreteTimeIntegratorVariableTs_UpperLimit_d) {
+    FlyByWire_DWork.Delay_DSTATE_ho = FlyByWire_P.DiscreteTimeIntegratorVariableTs_UpperLimit_d;
+  } else if (rtb_Sum5 < FlyByWire_P.DiscreteTimeIntegratorVariableTs_LowerLimit_k) {
+    FlyByWire_DWork.Delay_DSTATE_ho = FlyByWire_P.DiscreteTimeIntegratorVariableTs_LowerLimit_k;
   } else {
-    if (FlyByWire_DWork.DiscreteTimeIntegrator_DSTATE <= FlyByWire_P.DiscreteTimeIntegrator_LowerSat) {
-      FlyByWire_DWork.DiscreteTimeIntegrator_DSTATE = FlyByWire_P.DiscreteTimeIntegrator_LowerSat;
-    }
+    FlyByWire_DWork.Delay_DSTATE_ho = rtb_Sum5;
   }
 
-  rtb_deltafalllimit = rtb_Gainxi1 - FlyByWire_DWork.PrevY_p;
-  if (rtb_deltafalllimit > FlyByWire_P.RateLimiter2_RisingLim) {
-    rtb_LimiteriH = FlyByWire_DWork.PrevY_p + FlyByWire_P.RateLimiter2_RisingLim;
-  } else if (rtb_deltafalllimit < FlyByWire_P.RateLimiter2_FallingLim) {
-    rtb_LimiteriH = FlyByWire_DWork.PrevY_p + FlyByWire_P.RateLimiter2_FallingLim;
-  } else {
-    rtb_LimiteriH = rtb_Gainxi1;
+  rtb_Sum5 = (FlyByWire_DWork.Delay_DSTATE_ho - rtb_GainPhi) * FlyByWire_P.Gain2_Gain_i + FlyByWire_P.Gain1_Gain_mg *
+    result[0] * FlyByWire_P.pKp_Gain;
+  u0 = rtb_BusAssignment_a_sim_input_delta_zeta_pos - FlyByWire_DWork.Delay_DSTATE_cp;
+  rtb_Limiterxi2 = FlyByWire_P.RateLimiterVariableTs_up_m * FlyByWire_U.in.time.dt;
+  if (u0 < rtb_Limiterxi2) {
+    rtb_Limiterxi2 = u0;
   }
 
-  FlyByWire_DWork.PrevY_p = rtb_LimiteriH;
+  u1 = FlyByWire_U.in.time.dt * FlyByWire_P.RateLimiterVariableTs_lo_p;
+  if (rtb_Limiterxi2 > u1) {
+    u1 = rtb_Limiterxi2;
+  }
+
+  FlyByWire_DWork.Delay_DSTATE_cp += u1;
   denAccum = (rtb_Gain - FlyByWire_P.DiscreteTransferFcn1_DenCoef[1] * FlyByWire_DWork.DiscreteTransferFcn1_states) /
     FlyByWire_P.DiscreteTransferFcn1_DenCoef[0];
-  rtb_Limiterxi = (FlyByWire_P.DiscreteTransferFcn1_NumCoef[0] * denAccum + FlyByWire_P.DiscreteTransferFcn1_NumCoef[1] *
-                   FlyByWire_DWork.DiscreteTransferFcn1_states) * FlyByWire_P.Gain6_Gain_k;
-  if (rtb_Limiterxi > FlyByWire_P.Saturation2_UpperSat_e) {
-    rtb_Limiterxi = FlyByWire_P.Saturation2_UpperSat_e;
+  rtb_Limiterxi2 = (FlyByWire_P.DiscreteTransferFcn1_NumCoef[0] * denAccum + FlyByWire_P.DiscreteTransferFcn1_NumCoef[1]
+                    * FlyByWire_DWork.DiscreteTransferFcn1_states) * FlyByWire_P.Gain6_Gain_k;
+  if (rtb_Limiterxi2 > FlyByWire_P.Saturation2_UpperSat_e) {
+    rtb_Limiterxi2 = FlyByWire_P.Saturation2_UpperSat_e;
   } else {
-    if (rtb_Limiterxi < FlyByWire_P.Saturation2_LowerSat_gp) {
-      rtb_Limiterxi = FlyByWire_P.Saturation2_LowerSat_gp;
+    if (rtb_Limiterxi2 < FlyByWire_P.Saturation2_LowerSat_gp) {
+      rtb_Limiterxi2 = FlyByWire_P.Saturation2_LowerSat_gp;
     }
   }
 
-  rtb_BusAssignment_f_roll_law_normal_xi_deg = (FlyByWire_DWork.DiscreteTimeIntegrator_DSTATE - rtb_GainPhi) *
-    FlyByWire_P.Gain2_Gain_i + FlyByWire_P.Gain1_Gain_mg * result[0] * FlyByWire_P.pKp_Gain;
   if (FlyByWire_U.in.data.V_tas_kn > FlyByWire_P.Saturation_UpperSat_l) {
-    rtb_deltafalllimit = FlyByWire_P.Saturation_UpperSat_l;
+    rtb_Limiterxi = FlyByWire_P.Saturation_UpperSat_l;
   } else if (FlyByWire_U.in.data.V_tas_kn < FlyByWire_P.Saturation_LowerSat_l) {
-    rtb_deltafalllimit = FlyByWire_P.Saturation_LowerSat_l;
+    rtb_Limiterxi = FlyByWire_P.Saturation_LowerSat_l;
   } else {
-    rtb_deltafalllimit = FlyByWire_U.in.data.V_tas_kn;
+    rtb_Limiterxi = FlyByWire_U.in.data.V_tas_kn;
   }
 
-  rtb_deltafalllimit = (FlyByWire_P.DiscreteTransferFcn2_NumCoef * FlyByWire_DWork.DiscreteTransferFcn2_states - std::
-                        sin(FlyByWire_P.Gain1_Gain_br * FlyByWire_DWork.DiscreteTimeIntegrator_DSTATE) *
-                        FlyByWire_P.Constant2_Value * std::cos(FlyByWire_P.Gain1_Gain_c * rtb_GainTheta) /
-                        (FlyByWire_P.Gain6_Gain * rtb_deltafalllimit) * FlyByWire_P.Gain_Gain_cd) *
-    FlyByWire_P.Gain_Gain_h;
-  if (rtb_deltafalllimit > FlyByWire_P.Saturation1_UpperSat_ho) {
-    rtb_deltafalllimit = FlyByWire_P.Saturation1_UpperSat_ho;
+  u0 = (FlyByWire_P.DiscreteTransferFcn2_NumCoef * FlyByWire_DWork.DiscreteTransferFcn2_states - std::sin
+        (FlyByWire_P.Gain1_Gain_br * FlyByWire_DWork.Delay_DSTATE_ho) * FlyByWire_P.Constant2_Value * std::cos
+        (FlyByWire_P.Gain1_Gain_c * rtb_GainTheta) / (FlyByWire_P.Gain6_Gain * rtb_Limiterxi) * FlyByWire_P.Gain_Gain_cd)
+    * FlyByWire_P.Gain_Gain_h;
+  if (u0 > FlyByWire_P.Saturation1_UpperSat_ho) {
+    u0 = FlyByWire_P.Saturation1_UpperSat_ho;
   } else {
-    if (rtb_deltafalllimit < FlyByWire_P.Saturation1_LowerSat_g) {
-      rtb_deltafalllimit = FlyByWire_P.Saturation1_LowerSat_g;
+    if (u0 < FlyByWire_P.Saturation1_LowerSat_g) {
+      u0 = FlyByWire_P.Saturation1_LowerSat_g;
     }
   }
 
-  rtb_BusAssignment_f_roll_law_normal_zeta_deg = (FlyByWire_P.Gain5_Gain * rtb_LimiteriH + rtb_deltafalllimit) *
-    BusAssignment_p_roll_data_computed_in_flight_gain + rtb_Limiterxi;
-  if (BusAssignment_p_roll_data_computed_in_flight_gain > FlyByWire_P.Saturation_UpperSat_i) {
-    rtb_deltafalllimit = FlyByWire_P.Saturation_UpperSat_i;
-  } else if (BusAssignment_p_roll_data_computed_in_flight_gain < FlyByWire_P.Saturation_LowerSat_al) {
-    rtb_deltafalllimit = FlyByWire_P.Saturation_LowerSat_al;
+  rtb_Limiterxi = (FlyByWire_P.Gain5_Gain * FlyByWire_DWork.Delay_DSTATE_cp + u0) * FlyByWire_DWork.Delay_DSTATE_l +
+    rtb_Limiterxi2;
+  FlyByWire_Y.out.roll.law_normal.pk_c_deg_s = rtb_Limitereta;
+  FlyByWire_Y.out.roll.law_normal.xi_deg = rtb_Sum5;
+  FlyByWire_Y.out.roll.law_normal.zeta_deg = rtb_Limiterxi;
+  if (FlyByWire_DWork.Delay_DSTATE_l > FlyByWire_P.Saturation_UpperSat_c) {
+    rtb_Limitereta = FlyByWire_P.Saturation_UpperSat_c;
+  } else if (FlyByWire_DWork.Delay_DSTATE_l < FlyByWire_P.Saturation_LowerSat_aa) {
+    rtb_Limitereta = FlyByWire_P.Saturation_LowerSat_aa;
   } else {
-    rtb_deltafalllimit = BusAssignment_p_roll_data_computed_in_flight_gain;
+    rtb_Limitereta = FlyByWire_DWork.Delay_DSTATE_l;
   }
 
-  rtb_LimiteriH = rtb_BusAssignment_f_roll_law_normal_xi_deg * rtb_deltafalllimit;
-  rtb_deltafalllimit = FlyByWire_P.Constant_Value_c - rtb_deltafalllimit;
-  rtb_deltafalllimit *= BusAssignment_p_roll_data_computed_delta_xi_deg;
-  rtb_LimiteriH += rtb_deltafalllimit;
-  if (BusAssignment_p_roll_data_computed_in_flight_gain > FlyByWire_P.Saturation_UpperSat_id) {
-    rtb_deltafalllimit = FlyByWire_P.Saturation_UpperSat_id;
-  } else if (BusAssignment_p_roll_data_computed_in_flight_gain < FlyByWire_P.Saturation_LowerSat_n) {
-    rtb_deltafalllimit = FlyByWire_P.Saturation_LowerSat_n;
+  rtb_Sum5 *= rtb_Limitereta;
+  rtb_Limitereta = FlyByWire_P.Constant_Value_i - rtb_Limitereta;
+  rtb_Limitereta *= BusAssignment_roll_data_computed_delta_xi_deg;
+  rtb_Sum5 += rtb_Limitereta;
+  if (FlyByWire_DWork.Delay_DSTATE_l > FlyByWire_P.Saturation_UpperSat_k) {
+    rtb_Limitereta = FlyByWire_P.Saturation_UpperSat_k;
+  } else if (FlyByWire_DWork.Delay_DSTATE_l < FlyByWire_P.Saturation_LowerSat_cq) {
+    rtb_Limitereta = FlyByWire_P.Saturation_LowerSat_cq;
   } else {
-    rtb_deltafalllimit = BusAssignment_p_roll_data_computed_in_flight_gain;
+    rtb_Limitereta = FlyByWire_DWork.Delay_DSTATE_l;
   }
 
-  rtb_Limiterxi = rtb_BusAssignment_f_roll_law_normal_zeta_deg * rtb_deltafalllimit;
-  rtb_deltafalllimit = FlyByWire_P.Constant_Value_f - rtb_deltafalllimit;
-  rtb_deltafalllimit *= BusAssignment_p_roll_data_computed_delta_zeta_deg;
-  rtb_BusAssignment_l_roll_output_zeta_deg = rtb_Limiterxi + rtb_deltafalllimit;
-  rtb_deltafalllimit = rtb_BusAssignment_mv_pitch_output_eta_deg - FlyByWire_DWork.PrevY_d;
-  if (rtb_deltafalllimit > FlyByWire_P.RateLimitereta_RisingLim_j) {
-    rtb_deltafalllimit = FlyByWire_DWork.PrevY_d + FlyByWire_P.RateLimitereta_RisingLim_j;
-  } else if (rtb_deltafalllimit < FlyByWire_P.RateLimitereta_FallingLim_m) {
-    rtb_deltafalllimit = FlyByWire_DWork.PrevY_d + FlyByWire_P.RateLimitereta_FallingLim_m;
-  } else {
-    rtb_deltafalllimit = rtb_BusAssignment_mv_pitch_output_eta_deg;
+  rtb_Limiterxi *= rtb_Limitereta;
+  rtb_Limitereta = FlyByWire_P.Constant_Value_p - rtb_Limitereta;
+  rtb_Limitereta *= BusAssignment_roll_data_computed_delta_zeta_deg;
+  rtb_Limiterxi += rtb_Limitereta;
+  u0 = rtb_BusAssignment_m_pitch_output_eta_deg - FlyByWire_DWork.Delay_DSTATE_g;
+  u1 = FlyByWire_P.RateLimitereta_up * FlyByWire_U.in.time.dt;
+  if (u0 < u1) {
+    u1 = u0;
   }
 
-  FlyByWire_DWork.PrevY_d = rtb_deltafalllimit;
-  rtb_deltafalllimit *= FlyByWire_P.Gaineta_Gain_d;
-  if (rtb_deltafalllimit > FlyByWire_P.Limitereta_UpperSat) {
-    FlyByWire_Y.out.sim.raw.output.eta_pos = FlyByWire_P.Limitereta_UpperSat;
-  } else if (rtb_deltafalllimit < FlyByWire_P.Limitereta_LowerSat) {
-    FlyByWire_Y.out.sim.raw.output.eta_pos = FlyByWire_P.Limitereta_LowerSat;
-  } else {
-    FlyByWire_Y.out.sim.raw.output.eta_pos = rtb_deltafalllimit;
+  rtb_Limiterxi2 = FlyByWire_U.in.time.dt * FlyByWire_P.RateLimitereta_lo;
+  if (u1 > rtb_Limiterxi2) {
+    rtb_Limiterxi2 = u1;
   }
 
-  rtb_deltafalllimit = rtb_LimiteriH - FlyByWire_DWork.PrevY_jg;
-  if (rtb_deltafalllimit > FlyByWire_P.RateLimiterxi_RisingLim_n) {
-    rtb_Limiterxi = FlyByWire_DWork.PrevY_jg + FlyByWire_P.RateLimiterxi_RisingLim_n;
-  } else if (rtb_deltafalllimit < FlyByWire_P.RateLimiterxi_FallingLim_f) {
-    rtb_Limiterxi = FlyByWire_DWork.PrevY_jg + FlyByWire_P.RateLimiterxi_FallingLim_f;
-  } else {
-    rtb_Limiterxi = rtb_LimiteriH;
+  FlyByWire_DWork.Delay_DSTATE_g += rtb_Limiterxi2;
+  u0 = rtb_Sum5 - FlyByWire_DWork.Delay_DSTATE_gd;
+  u1 = FlyByWire_P.RateLimiterxi_up * FlyByWire_U.in.time.dt;
+  if (u0 < u1) {
+    u1 = u0;
   }
 
-  FlyByWire_DWork.PrevY_jg = rtb_Limiterxi;
-  rtb_Limiterxi *= FlyByWire_P.Gainxi_Gain_n;
-  if (rtb_Limiterxi > FlyByWire_P.Limiterxi_UpperSat) {
-    FlyByWire_Y.out.sim.raw.output.xi_pos = FlyByWire_P.Limiterxi_UpperSat;
-  } else if (rtb_Limiterxi < FlyByWire_P.Limiterxi_LowerSat) {
-    FlyByWire_Y.out.sim.raw.output.xi_pos = FlyByWire_P.Limiterxi_LowerSat;
-  } else {
-    FlyByWire_Y.out.sim.raw.output.xi_pos = rtb_Limiterxi;
+  rtb_Limiterxi2 = FlyByWire_U.in.time.dt * FlyByWire_P.RateLimiterxi_lo;
+  if (u1 > rtb_Limiterxi2) {
+    rtb_Limiterxi2 = u1;
   }
 
-  rtb_deltafalllimit = rtb_BusAssignment_l_roll_output_zeta_deg - FlyByWire_DWork.PrevY_g;
-  if (rtb_deltafalllimit > FlyByWire_P.RateLimiterxi1_RisingLim_k) {
-    rtb_Limiterxi = FlyByWire_DWork.PrevY_g + FlyByWire_P.RateLimiterxi1_RisingLim_k;
-  } else if (rtb_deltafalllimit < FlyByWire_P.RateLimiterxi1_FallingLim_o) {
-    rtb_Limiterxi = FlyByWire_DWork.PrevY_g + FlyByWire_P.RateLimiterxi1_FallingLim_o;
-  } else {
-    rtb_Limiterxi = rtb_BusAssignment_l_roll_output_zeta_deg;
+  FlyByWire_DWork.Delay_DSTATE_gd += rtb_Limiterxi2;
+  u0 = rtb_Limiterxi - FlyByWire_DWork.Delay_DSTATE_fz;
+  u1 = FlyByWire_P.RateLimiterzeta_up * FlyByWire_U.in.time.dt;
+  if (u0 < u1) {
+    u1 = u0;
   }
 
-  FlyByWire_DWork.PrevY_g = rtb_Limiterxi;
-  rtb_Limiterxi *= FlyByWire_P.Gainxi1_Gain_e;
-  if (rtb_Limiterxi > FlyByWire_P.Limiterxi1_UpperSat) {
-    FlyByWire_Y.out.sim.raw.output.zeta_pos = FlyByWire_P.Limiterxi1_UpperSat;
-  } else if (rtb_Limiterxi < FlyByWire_P.Limiterxi1_LowerSat) {
-    FlyByWire_Y.out.sim.raw.output.zeta_pos = FlyByWire_P.Limiterxi1_LowerSat;
-  } else {
-    FlyByWire_Y.out.sim.raw.output.zeta_pos = rtb_Limiterxi;
+  rtb_Limiterxi2 = FlyByWire_U.in.time.dt * FlyByWire_P.RateLimiterzeta_lo;
+  if (u1 > rtb_Limiterxi2) {
+    rtb_Limiterxi2 = u1;
   }
 
+  FlyByWire_DWork.Delay_DSTATE_fz += rtb_Limiterxi2;
+  FlyByWire_Y.out.sim.raw.time = FlyByWire_U.in.time;
   FlyByWire_Y.out.sim.raw.data = FlyByWire_U.in.data;
   FlyByWire_Y.out.sim.raw.input = FlyByWire_U.in.input;
-  rtb_deltafalllimit = FlyByWire_P.GainiH_Gain * FlyByWire_DWork.DelayInput2_DSTATE_h;
-  if (rtb_deltafalllimit > FlyByWire_P.LimiteriH_UpperSat) {
+  u0 = FlyByWire_P.Gaineta_Gain_d * FlyByWire_DWork.Delay_DSTATE_g;
+  if (u0 > FlyByWire_P.Limitereta_UpperSat) {
+    FlyByWire_Y.out.sim.raw.output.eta_pos = FlyByWire_P.Limitereta_UpperSat;
+  } else if (u0 < FlyByWire_P.Limitereta_LowerSat) {
+    FlyByWire_Y.out.sim.raw.output.eta_pos = FlyByWire_P.Limitereta_LowerSat;
+  } else {
+    FlyByWire_Y.out.sim.raw.output.eta_pos = u0;
+  }
+
+  u0 = FlyByWire_P.GainiH_Gain * FlyByWire_DWork.Delay_DSTATE_b;
+  if (u0 > FlyByWire_P.LimiteriH_UpperSat) {
     FlyByWire_Y.out.sim.raw.output.eta_trim_deg = FlyByWire_P.LimiteriH_UpperSat;
-  } else if (rtb_deltafalllimit < FlyByWire_P.LimiteriH_LowerSat) {
+  } else if (u0 < FlyByWire_P.LimiteriH_LowerSat) {
     FlyByWire_Y.out.sim.raw.output.eta_trim_deg = FlyByWire_P.LimiteriH_LowerSat;
   } else {
-    FlyByWire_Y.out.sim.raw.output.eta_trim_deg = rtb_deltafalllimit;
+    FlyByWire_Y.out.sim.raw.output.eta_trim_deg = u0;
   }
 
   FlyByWire_Y.out.sim.raw.output.eta_trim_deg_should_write = rtb_eta_trim_deg_should_write;
-  rtb_deltafalllimit = FlyByWire_P.Gainxi2_Gain * BusAssignment_sim_data_zeta_trim_deg;
-  if (rtb_deltafalllimit > FlyByWire_P.Limiterxi2_UpperSat) {
-    FlyByWire_Y.out.sim.raw.output.zeta_trim_pos = FlyByWire_P.Limiterxi2_UpperSat;
-  } else if (rtb_deltafalllimit < FlyByWire_P.Limiterxi2_LowerSat) {
-    FlyByWire_Y.out.sim.raw.output.zeta_trim_pos = FlyByWire_P.Limiterxi2_LowerSat;
+  u0 = FlyByWire_P.Gainxi_Gain_n * FlyByWire_DWork.Delay_DSTATE_gd;
+  if (u0 > FlyByWire_P.Limiterxi_UpperSat) {
+    FlyByWire_Y.out.sim.raw.output.xi_pos = FlyByWire_P.Limiterxi_UpperSat;
+  } else if (u0 < FlyByWire_P.Limiterxi_LowerSat) {
+    FlyByWire_Y.out.sim.raw.output.xi_pos = FlyByWire_P.Limiterxi_LowerSat;
   } else {
-    FlyByWire_Y.out.sim.raw.output.zeta_trim_pos = rtb_deltafalllimit;
+    FlyByWire_Y.out.sim.raw.output.xi_pos = u0;
   }
 
+  u0 = FlyByWire_P.Gainxi1_Gain_e * FlyByWire_DWork.Delay_DSTATE_fz;
+  if (u0 > FlyByWire_P.Limiterxi1_UpperSat) {
+    FlyByWire_Y.out.sim.raw.output.zeta_pos = FlyByWire_P.Limiterxi1_UpperSat;
+  } else if (u0 < FlyByWire_P.Limiterxi1_LowerSat) {
+    FlyByWire_Y.out.sim.raw.output.zeta_pos = FlyByWire_P.Limiterxi1_LowerSat;
+  } else {
+    FlyByWire_Y.out.sim.raw.output.zeta_pos = u0;
+  }
+
+  u0 = FlyByWire_P.Gainxi2_Gain * result_tmp;
+  if (u0 > FlyByWire_P.Limiterxi2_UpperSat) {
+    FlyByWire_Y.out.sim.raw.output.zeta_trim_pos = FlyByWire_P.Limiterxi2_UpperSat;
+  } else if (u0 < FlyByWire_P.Limiterxi2_LowerSat) {
+    FlyByWire_Y.out.sim.raw.output.zeta_trim_pos = FlyByWire_P.Limiterxi2_LowerSat;
+  } else {
+    FlyByWire_Y.out.sim.raw.output.zeta_trim_pos = u0;
+  }
+
+  FlyByWire_Y.out.sim.time.dt = FlyByWire_U.in.time.dt;
+  FlyByWire_Y.out.sim.time.monotonic_time = FlyByWire_DWork.Delay_DSTATE;
   FlyByWire_Y.out.sim.data.nz_g = FlyByWire_U.in.data.nz_g;
   FlyByWire_Y.out.sim.data.Theta_deg = rtb_GainTheta;
   FlyByWire_Y.out.sim.data.Phi_deg = rtb_GainPhi;
@@ -1116,7 +1084,8 @@ void FlyByWireModelClass::step()
   FlyByWire_Y.out.sim.data.qk_dot_deg_s2 = result_0[1];
   FlyByWire_Y.out.sim.data.rk_dot_deg_s2 = result_0[2];
   FlyByWire_Y.out.sim.data.pk_dot_deg_s2 = result_0[0];
-  FlyByWire_Y.out.sim.data.zeta_trim_deg = BusAssignment_sim_data_zeta_trim_deg;
+  FlyByWire_Y.out.sim.data.eta_trim_deg = rtb_Minup;
+  FlyByWire_Y.out.sim.data.zeta_trim_deg = result_tmp;
   FlyByWire_Y.out.sim.data.alpha_deg = FlyByWire_U.in.data.alpha_deg;
   FlyByWire_Y.out.sim.data.beta_deg = FlyByWire_U.in.data.beta_deg;
   FlyByWire_Y.out.sim.data.beta_dot_deg_s = FlyByWire_U.in.data.beta_dot_deg_s;
@@ -1127,26 +1096,26 @@ void FlyByWireModelClass::step()
   FlyByWire_Y.out.sim.data.H_ind_ft = FlyByWire_U.in.data.H_ind_ft;
   FlyByWire_Y.out.sim.data.H_radio_ft = FlyByWire_U.in.data.H_radio_ft;
   FlyByWire_Y.out.sim.data.CG_percent_MAC = FlyByWire_U.in.data.CG_percent_MAC;
-  rtb_deltafalllimit = FlyByWire_P.Gain_Gain_i * FlyByWire_U.in.data.gear_animation_pos_0 - FlyByWire_P.Constant_Value_g;
-  if (rtb_deltafalllimit > FlyByWire_P.Saturation_UpperSat_e) {
+  u0 = FlyByWire_P.Gain_Gain_i * FlyByWire_U.in.data.gear_animation_pos_0 - FlyByWire_P.Constant_Value_g;
+  if (u0 > FlyByWire_P.Saturation_UpperSat_e) {
     FlyByWire_Y.out.sim.data.gear_strut_compression_0 = FlyByWire_P.Saturation_UpperSat_e;
-  } else if (rtb_deltafalllimit < FlyByWire_P.Saturation_LowerSat_e) {
+  } else if (u0 < FlyByWire_P.Saturation_LowerSat_e) {
     FlyByWire_Y.out.sim.data.gear_strut_compression_0 = FlyByWire_P.Saturation_LowerSat_e;
   } else {
-    FlyByWire_Y.out.sim.data.gear_strut_compression_0 = rtb_deltafalllimit;
+    FlyByWire_Y.out.sim.data.gear_strut_compression_0 = u0;
   }
 
-  FlyByWire_Y.out.sim.data.gear_strut_compression_2 = result_tmp;
+  FlyByWire_Y.out.sim.data.gear_strut_compression_2 = Theta;
   FlyByWire_Y.out.sim.data.flaps_handle_index = FlyByWire_U.in.data.flaps_handle_index;
   FlyByWire_Y.out.sim.data.autopilot_master_on = FlyByWire_U.in.data.autopilot_master_on;
   FlyByWire_Y.out.sim.data_computed.on_ground = rtb_on_ground;
-  FlyByWire_Y.out.sim.input.delta_eta_pos = rtb_Gaineta;
-  FlyByWire_Y.out.sim.input.delta_xi_pos = rtb_Gainxi;
-  FlyByWire_Y.out.sim.input.delta_zeta_pos = rtb_Gainxi1;
+  FlyByWire_Y.out.sim.input.delta_eta_pos = Phi;
+  FlyByWire_Y.out.sim.input.delta_xi_pos = rtb_BusAssignment_a_sim_input_delta_xi_pos;
+  FlyByWire_Y.out.sim.input.delta_zeta_pos = rtb_BusAssignment_a_sim_input_delta_zeta_pos;
   FlyByWire_Y.out.pitch.data_computed.delta_eta_deg = rtb_BusAssignment_c_pitch_data_computed_delta_eta_deg;
-  FlyByWire_Y.out.pitch.data_computed.in_flight = rtb_in_flight_o;
+  FlyByWire_Y.out.pitch.data_computed.in_flight = FlyByWire_B.in_flight;
   FlyByWire_Y.out.pitch.data_computed.in_flare = rtb_in_flare;
-  FlyByWire_Y.out.pitch.data_computed.in_flight_gain = rtb_BusAssignment_c_pitch_data_computed_in_flight_gain;
+  FlyByWire_Y.out.pitch.data_computed.in_flight_gain = FlyByWire_DWork.Delay_DSTATE_hc;
   FlyByWire_Y.out.pitch.data_computed.nz_limit_up_g = rtb_nz_limit_up_g;
   FlyByWire_Y.out.pitch.data_computed.nz_limit_lo_g = rtb_nz_limit_lo_g;
   FlyByWire_Y.out.pitch.data_computed.eta_trim_deg_should_freeze = rtb_eta_trim_deg_should_freeze;
@@ -1155,79 +1124,24 @@ void FlyByWireModelClass::step()
   FlyByWire_Y.out.pitch.data_computed.eta_trim_deg_should_write = rtb_eta_trim_deg_should_write;
   FlyByWire_Y.out.pitch.data_computed.eta_trim_deg_rate_limit_up_deg_s = rtb_ManualSwitch;
   FlyByWire_Y.out.pitch.data_computed.eta_trim_deg_rate_limit_lo_deg_s = rtb_eta_trim_deg_rate_limit_lo_deg_s;
-  FlyByWire_Y.out.pitch.data_computed.flare_Theta_deg = numAccum;
-  FlyByWire_Y.out.pitch.data_computed.flare_Theta_c_deg = FlyByWire_DWork.DelayInput2_DSTATE;
+  FlyByWire_Y.out.pitch.data_computed.flare_Theta_deg = FlyByWire_DWork.Delay1_DSTATE;
+  FlyByWire_Y.out.pitch.data_computed.flare_Theta_c_deg = FlyByWire_DWork.Delay_DSTATE_f;
   FlyByWire_Y.out.pitch.data_computed.flare_Theta_c_rate_deg_s = FlyByWire_B.flare_Theta_c_rate_deg_s;
-  FlyByWire_Y.out.pitch.law_normal.Cstar_g = rtb_Integration_m;
-  FlyByWire_Y.out.pitch.integrated.eta_deg = FlyByWire_DWork.Integration_DSTATE;
-  FlyByWire_Y.out.pitch.output.eta_deg = rtb_BusAssignment_mv_pitch_output_eta_deg;
-  FlyByWire_Y.out.pitch.output.eta_trim_deg = FlyByWire_DWork.DelayInput2_DSTATE_h;
-  FlyByWire_Y.out.roll.data_computed.delta_xi_deg = BusAssignment_p_roll_data_computed_delta_xi_deg;
-  FlyByWire_Y.out.roll.data_computed.delta_zeta_deg = BusAssignment_p_roll_data_computed_delta_zeta_deg;
+  FlyByWire_Y.out.pitch.integrated.eta_deg = FlyByWire_DWork.Delay_DSTATE_f1;
+  FlyByWire_Y.out.pitch.output.eta_deg = rtb_BusAssignment_m_pitch_output_eta_deg;
+  FlyByWire_Y.out.pitch.output.eta_trim_deg = FlyByWire_DWork.Delay_DSTATE_b;
+  FlyByWire_Y.out.roll.data_computed.delta_xi_deg = BusAssignment_roll_data_computed_delta_xi_deg;
+  FlyByWire_Y.out.roll.data_computed.delta_zeta_deg = BusAssignment_roll_data_computed_delta_zeta_deg;
   FlyByWire_Y.out.roll.data_computed.in_flight = rtb_in_flight;
-  FlyByWire_Y.out.roll.data_computed.in_flight_gain = BusAssignment_p_roll_data_computed_in_flight_gain;
-  FlyByWire_Y.out.roll.law_normal.pk_c_deg_s = rtb_deltafalllimit_a;
-  FlyByWire_Y.out.roll.law_normal.Phi_c_deg = FlyByWire_DWork.DiscreteTimeIntegrator_DSTATE;
-  FlyByWire_Y.out.roll.law_normal.xi_deg = rtb_BusAssignment_f_roll_law_normal_xi_deg;
-  FlyByWire_Y.out.roll.law_normal.zeta_deg = rtb_BusAssignment_f_roll_law_normal_zeta_deg;
-  FlyByWire_Y.out.roll.output.xi_deg = rtb_LimiteriH;
-  FlyByWire_Y.out.roll.output.zeta_deg = rtb_BusAssignment_l_roll_output_zeta_deg;
-  if (rtb_eta_trim_deg_should_freeze) {
-    rtb_GainPhi = FlyByWire_P.Constant_Value;
-  } else {
-    rtb_GainPhi = FlyByWire_DWork.Integration_DSTATE;
-  }
-
-  FlyByWire_DWork.DiscreteTransferFcn_states = (rtb_GainTheta - FlyByWire_P.DiscreteTransferFcn_DenCoef[1] *
-    FlyByWire_DWork.DiscreteTransferFcn_states) / FlyByWire_P.DiscreteTransferFcn_DenCoef[0];
-  FlyByWire_DWork.UD_DSTATE = rtb_Gain1_b;
-  FlyByWire_DWork.Integration_IC_LOADING = 0U;
-  FlyByWire_DWork.Integration_DSTATE += FlyByWire_P.Integration_gainval * rtb_PProdOut;
-  if (FlyByWire_DWork.Integration_DSTATE >= FlyByWire_P.Integration_UpperSat) {
-    FlyByWire_DWork.Integration_DSTATE = FlyByWire_P.Integration_UpperSat;
-  } else {
-    if (FlyByWire_DWork.Integration_DSTATE <= FlyByWire_P.Integration_LowerSat) {
-      FlyByWire_DWork.Integration_DSTATE = FlyByWire_P.Integration_LowerSat;
-    }
-  }
-
-  if (rtb_in_flight_o > 0) {
-    FlyByWire_DWork.Integration_PrevResetState = 1;
-  } else {
-    FlyByWire_DWork.Integration_PrevResetState = 0;
-  }
-
-  FlyByWire_DWork.Integration_IC_LOADING_a = 0U;
-  FlyByWire_DWork.Integration_DSTATE_e += FlyByWire_P.Gain_Gain_ip * rtb_GainPhi * FlyByWire_P.Integration_gainval_c;
-  if (FlyByWire_DWork.Integration_DSTATE_e >= FlyByWire_P.Integration_UpperSat_f) {
-    FlyByWire_DWork.Integration_DSTATE_e = FlyByWire_P.Integration_UpperSat_f;
-  } else {
-    if (FlyByWire_DWork.Integration_DSTATE_e <= FlyByWire_P.Integration_LowerSat_f) {
-      FlyByWire_DWork.Integration_DSTATE_e = FlyByWire_P.Integration_LowerSat_f;
-    }
-  }
-
-  FlyByWire_DWork.Integration_PrevResetState_p = static_cast<int8_T>(rtb_eta_trim_deg_reset);
-  FlyByWire_DWork.DiscreteTimeIntegrator_IC_LOADING = 0U;
-  FlyByWire_DWork.DiscreteTimeIntegrator_DSTATE += FlyByWire_P.DiscreteTimeIntegrator_gainval * rtb_deltafalllimit_a;
-  if (FlyByWire_DWork.DiscreteTimeIntegrator_DSTATE >= FlyByWire_P.DiscreteTimeIntegrator_UpperSat) {
-    FlyByWire_DWork.DiscreteTimeIntegrator_DSTATE = FlyByWire_P.DiscreteTimeIntegrator_UpperSat;
-  } else {
-    if (FlyByWire_DWork.DiscreteTimeIntegrator_DSTATE <= FlyByWire_P.DiscreteTimeIntegrator_LowerSat) {
-      FlyByWire_DWork.DiscreteTimeIntegrator_DSTATE = FlyByWire_P.DiscreteTimeIntegrator_LowerSat;
-    }
-  }
-
-  if (BusAssignment_p_roll_data_computed_in_flight_gain > 0.0) {
-    FlyByWire_DWork.DiscreteTimeIntegrator_PrevResetState = 1;
-  } else if (BusAssignment_p_roll_data_computed_in_flight_gain < 0.0) {
-    FlyByWire_DWork.DiscreteTimeIntegrator_PrevResetState = -1;
-  } else if (BusAssignment_p_roll_data_computed_in_flight_gain == 0.0) {
-    FlyByWire_DWork.DiscreteTimeIntegrator_PrevResetState = 0;
-  } else {
-    FlyByWire_DWork.DiscreteTimeIntegrator_PrevResetState = 2;
-  }
-
+  FlyByWire_Y.out.roll.data_computed.in_flight_gain = FlyByWire_DWork.Delay_DSTATE_l;
+  FlyByWire_Y.out.roll.law_normal.Phi_c_deg = FlyByWire_DWork.Delay_DSTATE_ho;
+  FlyByWire_Y.out.roll.output.xi_deg = rtb_Sum5;
+  FlyByWire_Y.out.roll.output.zeta_deg = rtb_Limiterxi;
+  FlyByWire_DWork.Delay_DSTATE_h = rtb_GainTheta;
+  FlyByWire_DWork.Delay_DSTATE_cf = rtb_Gain1_b;
+  FlyByWire_DWork.icLoad = 0U;
+  FlyByWire_DWork.icLoad_b = 0U;
+  FlyByWire_DWork.icLoad_m = 0U;
   FlyByWire_DWork.DiscreteTransferFcn2_states = (rtb_Gain - FlyByWire_P.DiscreteTransferFcn2_DenCoef[1] *
     FlyByWire_DWork.DiscreteTransferFcn2_states) / FlyByWire_P.DiscreteTransferFcn2_DenCoef[0];
   FlyByWire_DWork.DiscreteTransferFcn1_states = denAccum;
@@ -1241,32 +1155,31 @@ void FlyByWireModelClass::initialize()
                      sizeof(D_Work_FlyByWire_T));
   FlyByWire_U.in = FlyByWire_rtZfbw_input;
   FlyByWire_Y.out = FlyByWire_rtZfbw_output;
-  FlyByWire_DWork.PrevY = FlyByWire_P.RateLimitereta_IC;
-  FlyByWire_DWork.PrevY_c = FlyByWire_P.RateLimiterxi_IC;
-  FlyByWire_DWork.PrevY_f = FlyByWire_P.RateLimiterxi1_IC;
-  FlyByWire_DWork.DiscreteTransferFcn_states = FlyByWire_P.DiscreteTransferFcn_InitialStates;
-  FlyByWire_DWork.PrevY_h = FlyByWire_P.RateLimit_IC;
-  FlyByWire_DWork.DelayInput2_DSTATE = FlyByWire_P.DelayInput2_InitialCondition;
-  FlyByWire_DWork.UD_DSTATE = FlyByWire_P.PID_DifferentiatorICPrevScaledInput;
-  FlyByWire_DWork.Integration_IC_LOADING = 1U;
-  FlyByWire_DWork.Integration_PrevResetState = 2;
-  FlyByWire_DWork.Integration_IC_LOADING_a = 1U;
-  FlyByWire_DWork.Integration_PrevResetState_p = 0;
-  FlyByWire_DWork.DelayInput2_DSTATE_h = FlyByWire_P.DelayInput2_InitialCondition_d;
-  FlyByWire_DWork.PrevY_j = FlyByWire_P.RateLimit_IC_d;
-  FlyByWire_DWork.DiscreteTimeIntegrator_IC_LOADING = 1U;
-  FlyByWire_DWork.DiscreteTimeIntegrator_PrevResetState = 2;
-  FlyByWire_DWork.PrevY_p = FlyByWire_P.RateLimiter2_IC;
+  FlyByWire_PrevZCSigState.Delay_Reset_ZCE = UNINITIALIZED_ZCSIG;
+  FlyByWire_PrevZCSigState.Delay_Reset_ZCE_f = UNINITIALIZED_ZCSIG;
+  FlyByWire_PrevZCSigState.Delay_Reset_ZCE_a = UNINITIALIZED_ZCSIG;
+  FlyByWire_DWork.Delay_DSTATE = FlyByWire_P.Delay_InitialCondition;
+  FlyByWire_DWork.Delay_DSTATE_h = FlyByWire_P.Delay_InitialCondition_m;
+  FlyByWire_DWork.Delay1_DSTATE = FlyByWire_P.Delay1_InitialCondition;
+  FlyByWire_DWork.Delay_DSTATE_hc = FlyByWire_P.RateLimiterVariableTs_InitialCondition;
+  FlyByWire_DWork.Delay_DSTATE_f = FlyByWire_P.RateLimiterDynamicVariableTs_InitialCondition;
+  FlyByWire_DWork.Delay_DSTATE_c = FlyByWire_P.RateLimiterVariableTs_InitialCondition_c;
+  FlyByWire_DWork.Delay_DSTATE_cf = FlyByWire_P.DiscreteDerivativeVariableTs_InitialCondition;
+  FlyByWire_DWork.icLoad = 1U;
+  FlyByWire_DWork.Delay_DSTATE_b = FlyByWire_P.RateLimiterDynamicVariableTs_InitialCondition_i;
+  FlyByWire_DWork.icLoad_b = 1U;
+  FlyByWire_DWork.Delay_DSTATE_l = FlyByWire_P.RateLimiterVariableTs_InitialCondition_f;
+  FlyByWire_DWork.icLoad_m = 1U;
+  FlyByWire_DWork.Delay_DSTATE_cp = FlyByWire_P.RateLimiterVariableTs_InitialCondition_fc;
   FlyByWire_DWork.DiscreteTransferFcn2_states = FlyByWire_P.DiscreteTransferFcn2_InitialStates;
   FlyByWire_DWork.DiscreteTransferFcn1_states = FlyByWire_P.DiscreteTransferFcn1_InitialStates;
-  FlyByWire_DWork.PrevY_d = FlyByWire_P.RateLimitereta_IC_c;
-  FlyByWire_DWork.PrevY_jg = FlyByWire_P.RateLimiterxi_IC_c;
-  FlyByWire_DWork.PrevY_g = FlyByWire_P.RateLimiterxi1_IC_i;
+  FlyByWire_DWork.Delay_DSTATE_g = FlyByWire_P.RateLimitereta_InitialCondition;
+  FlyByWire_DWork.Delay_DSTATE_gd = FlyByWire_P.RateLimiterxi_InitialCondition;
+  FlyByWire_DWork.Delay_DSTATE_fz = FlyByWire_P.RateLimiterzeta_InitialCondition;
   FlyByWire_DWork.is_active_c1_FlyByWire = 0U;
   FlyByWire_DWork.is_c1_FlyByWire = FlyByWire_IN_NO_ACTIVE_CHILD;
   FlyByWire_DWork.is_active_c3_FlyByWire = 0U;
   FlyByWire_DWork.is_c3_FlyByWire = FlyByWire_IN_NO_ACTIVE_CHILD;
-  FlyByWire_DWork.chartAbsoluteTimeCounter = 0;
   FlyByWire_DWork.is_active_c2_FlyByWire = 0U;
   FlyByWire_DWork.is_c2_FlyByWire = FlyByWire_IN_NO_ACTIVE_CHILD;
   FlyByWire_DWork.is_active_c7_FlyByWire = 0U;
