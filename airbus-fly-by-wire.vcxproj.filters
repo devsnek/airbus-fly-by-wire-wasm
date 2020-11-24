@@ -30,9 +30,6 @@
     <ClCompile Include="src\model\FlyByWire_data.cpp">
       <Filter>src\model</Filter>
     </ClCompile>
-    <ClCompile Include="src\model\rt_zcfcn.cpp">
-      <Filter>src\model</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\main.h">
@@ -56,16 +53,7 @@
     <ClInclude Include="src\model\FlyByWire_types.h">
       <Filter>src\model</Filter>
     </ClInclude>
-    <ClInclude Include="src\model\rt_zcfcn.h">
-      <Filter>src\model</Filter>
-    </ClInclude>
     <ClInclude Include="src\model\rtwtypes.h">
-      <Filter>src\model</Filter>
-    </ClInclude>
-    <ClInclude Include="src\model\solver_zc.h">
-      <Filter>src\model</Filter>
-    </ClInclude>
-    <ClInclude Include="src\model\zero_crossing_types.h">
       <Filter>src\model</Filter>
     </ClInclude>
   </ItemGroup>

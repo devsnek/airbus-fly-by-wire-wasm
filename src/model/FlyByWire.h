@@ -5,11 +5,9 @@
 #ifndef FlyByWire_COMMON_INCLUDES_
 # define FlyByWire_COMMON_INCLUDES_
 #include "rtwtypes.h"
-#include "zero_crossing_types.h"
 #endif
 
 #include "FlyByWire_types.h"
-#include "rt_zcfcn.h"
 
 typedef struct {
   real_T in_flight;
@@ -19,23 +17,23 @@ typedef struct {
 
 typedef struct {
   real_T Delay_DSTATE;
-  real_T Delay_DSTATE_h;
+  real_T Delay_DSTATE_e;
   real_T Delay1_DSTATE;
-  real_T Delay_DSTATE_hc;
+  real_T Delay_DSTATE_ex;
+  real_T Delay_DSTATE_o;
+  real_T Delay_DSTATE_a;
   real_T Delay_DSTATE_f;
-  real_T Delay_DSTATE_c;
-  real_T Delay_DSTATE_cf;
   real_T Delay_DSTATE_f1;
-  real_T Delay_DSTATE_b;
+  real_T Delay_DSTATE_j;
   real_T Delay_DSTATE_m;
   real_T Delay_DSTATE_l;
-  real_T Delay_DSTATE_ho;
-  real_T Delay_DSTATE_cp;
+  real_T Delay_DSTATE_h;
+  real_T Delay_DSTATE_p;
   real_T DiscreteTransferFcn2_states;
   real_T DiscreteTransferFcn1_states;
-  real_T Delay_DSTATE_g;
-  real_T Delay_DSTATE_gd;
-  real_T Delay_DSTATE_fz;
+  real_T Delay_DSTATE_i;
+  real_T Delay_DSTATE_b;
+  real_T Delay_DSTATE_mj;
   real_T on_ground_time;
   uint8_T icLoad;
   uint8_T icLoad_b;
@@ -55,12 +53,6 @@ typedef struct {
   uint8_T is_active_c1_FlyByWire;
   uint8_T is_c1_FlyByWire;
 } D_Work_FlyByWire_T;
-
-typedef struct {
-  ZCSigState Delay_Reset_ZCE;
-  ZCSigState Delay_Reset_ZCE_f;
-  ZCSigState Delay_Reset_ZCE_a;
-} PrevZCSigStates_FlyByWire_T;
 
 typedef struct {
   fbw_input in;
@@ -145,8 +137,8 @@ struct Parameters_FlyByWire_T_ {
   real_T Gainxi_Gain;
   real_T Gainxi1_Gain;
   real_T Gain_Gain_d;
-  real_T Delay_InitialCondition_m;
-  real_T Constant_Value_l;
+  real_T Delay_InitialCondition_e;
+  real_T Constant_Value_o;
   real_T Delay1_InitialCondition;
   real_T Constant1_Value;
   real_T Constant_Value_j;
@@ -173,9 +165,9 @@ struct Parameters_FlyByWire_T_ {
   real_T DLUT_bp01Data[2];
   real_T Saturation_UpperSat_j;
   real_T Saturation_LowerSat_c;
-  real_T Saturation_UpperSat_o;
-  real_T Saturation_LowerSat_el;
-  real_T Constant_Value_c;
+  real_T Saturation_UpperSat_i;
+  real_T Saturation_LowerSat_eo;
+  real_T Constant_Value_k;
   real_T Gain_Gain_ip;
   real_T Gain_Gain_c;
   real_T Gain1_Gain_jh;
@@ -209,12 +201,12 @@ struct Parameters_FlyByWire_T_ {
   real_T Gain6_Gain_k;
   real_T Saturation2_UpperSat_e;
   real_T Saturation2_LowerSat_gp;
-  real_T Saturation_UpperSat_c;
-  real_T Saturation_LowerSat_aa;
-  real_T Constant_Value_i;
+  real_T Saturation_UpperSat_ll;
+  real_T Saturation_LowerSat_ev;
+  real_T Constant_Value_n;
   real_T Saturation_UpperSat_k;
-  real_T Saturation_LowerSat_cq;
-  real_T Constant_Value_p;
+  real_T Saturation_LowerSat_m;
+  real_T Constant_Value_e;
   real_T Gaineta_Gain_d;
   real_T Limitereta_UpperSat;
   real_T Limitereta_LowerSat;
@@ -249,7 +241,6 @@ class FlyByWireModelClass {
   static Parameters_FlyByWire_T FlyByWire_P;
   BlockIO_FlyByWire_T FlyByWire_B;
   D_Work_FlyByWire_T FlyByWire_DWork;
-  PrevZCSigStates_FlyByWire_T FlyByWire_PrevZCSigState;
 };
 
 #endif

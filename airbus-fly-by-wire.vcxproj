@@ -156,7 +156,6 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\model\FlyByWire.cpp" />
     <ClCompile Include="src\model\FlyByWire_data.cpp" />
-    <ClCompile Include="src\model\rt_zcfcn.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\FlyByWireInterface.h" />
@@ -167,9 +166,6 @@
     <ClInclude Include="src\model\FlyByWire_private.h" />
     <ClInclude Include="src\model\FlyByWire_types.h" />
     <ClInclude Include="src\model\rtwtypes.h" />
-    <ClInclude Include="src\model\rt_zcfcn.h" />
-    <ClInclude Include="src\model\solver_zc.h" />
-    <ClInclude Include="src\model\zero_crossing_types.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

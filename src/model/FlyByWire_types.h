@@ -1,7 +1,6 @@
 #ifndef RTW_HEADER_FlyByWire_types_h_
 #define RTW_HEADER_FlyByWire_types_h_
 #include "rtwtypes.h"
-#include "zero_crossing_types.h"
 #ifndef DEFINED_TYPEDEF_FOR_base_raw_time_
 #define DEFINED_TYPEDEF_FOR_base_raw_time_
 
