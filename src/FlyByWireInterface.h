@@ -14,13 +14,16 @@ public:
   void disconnect();
 
   bool update(
-      double sampleTime);
+      double sampleTime
+  );
 
 private:
   SimConnectInterface simConnectInterface;
   FlyByWireModelClass model;
 
-  bool getModelInputDataFromSim();
+  bool getModelInputDataFromSim(
+    double sampleTime
+  );
 
   bool writeModelOuputDataToSim();
 };
