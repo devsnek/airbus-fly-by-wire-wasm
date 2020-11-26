@@ -20,7 +20,7 @@ This is work in progress, there are still issues.
 #### Not solved / missing:
 - :x: strange interaction with default auto thrust system -> thrust lever sometimes does not move, fix is to manually disable ATHR
 - :x: High speed protection
-- :x: High angle of attach protection
+- :x: High angle of attack (AoA) protection
 - :x: alternative law
 - :x: direct law (in flight)
 
