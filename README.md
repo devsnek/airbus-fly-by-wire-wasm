@@ -4,18 +4,25 @@ This repository contains code to create a WASM module with a custom Fly-by-Wire 
 
 ## Disclaimer
 
-This is work in progress, there are still a lot of issues. Examples:
+This is work in progress, there are still issues.
 
-- pitch attitude protections can oscillate -> should be improved now
-- nose-down pitch attitude protection sometimes kicks-in too early -> should be improved now
-- pitch normal law (C* law) sometimes oscillates on low speed -> should be improved now
-- transformation from ground to flight mode might take longer than intended (nose might drop after releasing the stick)
-- yaw damper / rudder control missing -> first version is now included
-- auto-trim feature locks trim wheel completely -> fixed
-- strange interaction with default auto thrust system -> thrust lever sometimes does not move, fix is to manually disable ATHR
-- flare mode might be stronger than expected, needs to be investigated -> was reduced in authority, should be better now
+#### Mostly solved:
+- :heavy_check_mark: pitch attitude protections can oscillate
+- :heavy_check_mark: nose-down pitch attitude protection sometimes kicks-in too early
+- :heavy_check_mark: transformation from ground to flight mode might take longer than intended (nose might drop after releasing the stick)
+- :heavy_check_mark: auto-trim feature locks trim wheel completely
 
-:warning: **The WASM interface does not provide control about timing yet, therefore the nominal sample rate of the fly-by-wire model it was made for (0.02 s) is not met. The actual sample rate depends heavily on the render performance of flight simulator. This leads to the fact that signals, tunings, timings, filtering, transfer functions etc. might not work as intendet or designed.**
+#### In principle solved, but fine tuning necessary for different flight conditions (a lot of tests need to be done to check for behaviour):
+- :heavy_check_mark: pitch normal law (C* law) sometimes oscillates on low speed
+- :heavy_check_mark: yaw damper / rudder control missing
+- :heavy_check_mark: flare mode might be stronger than expected, needs to be investigated
+
+#### Not solved / missing:
+- :x: strange interaction with default auto thrust system -> thrust lever sometimes does not move, fix is to manually disable ATHR
+- :x: High speed protection
+- :x: High angle of attach protection
+- :x: alternative law
+- :x: direct law (in flight)
 
 ## Adding the WASM to the FlyByWireSim A32NX
 
