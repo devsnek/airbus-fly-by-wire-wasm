@@ -26,6 +26,9 @@ This is work in progress, there are still issues.
 - :x: alternative law
 - :x: direct law (in flight)
 
+#### Compatibility
+- :x: incompatible with YourControls add-on
+
 ## Adding the WASM to the FlyByWireSim A32NX
 
 To test drive the custom fly-by-wire system with the A32NX you need to do the following:
