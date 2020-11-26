@@ -23,7 +23,10 @@ typedef struct {
   real_T q_dot_rad_s2;
   real_T r_dot_rad_s2;
   real_T p_dot_rad_s2;
+  real_T eta_pos;
   real_T eta_trim_deg;
+  real_T xi_pos;
+  real_T zeta_pos;
   real_T zeta_trim_pos;
   real_T alpha_deg;
   real_T beta_deg;
@@ -40,6 +43,8 @@ typedef struct {
   real_T gear_animation_pos_2;
   real_T flaps_handle_index;
   real_T autopilot_master_on;
+  real_T slew_on;
+  real_T pause_on;
 } base_raw_data;
 
 #endif
@@ -118,7 +123,10 @@ typedef struct {
   real_T qk_dot_deg_s2;
   real_T rk_dot_deg_s2;
   real_T pk_dot_deg_s2;
+  real_T eta_deg;
   real_T eta_trim_deg;
+  real_T xi_deg;
+  real_T zeta_deg;
   real_T zeta_trim_deg;
   real_T alpha_deg;
   real_T beta_deg;
@@ -135,6 +143,8 @@ typedef struct {
   real_T gear_strut_compression_2;
   real_T flaps_handle_index;
   real_T autopilot_master_on;
+  real_T slew_on;
+  real_T pause_on;
 } base_data;
 
 #endif
@@ -144,6 +154,7 @@ typedef struct {
 
 typedef struct {
   real_T on_ground;
+  real_T tracking_mode_on;
 } base_data_computed;
 
 #endif

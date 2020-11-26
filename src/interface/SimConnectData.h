@@ -10,7 +10,10 @@ struct SimData
   double Phi_deg;
   SIMCONNECT_DATA_XYZ bodyRotationVelocity;
   SIMCONNECT_DATA_XYZ bodyRotationAcceleration;
+  double eta_pos;
   double eta_trim_deg;
+  double xi_pos;
+  double zeta_pos;
   double zeta_trim_pos;
   double alpha_deg;
   double beta_deg;
@@ -27,6 +30,7 @@ struct SimData
   double geat_animation_pos_2;
   double flaps_handle_index;
   bool autopilot_master_on;
+  bool slew_on;
 };
 
 struct SimInput
